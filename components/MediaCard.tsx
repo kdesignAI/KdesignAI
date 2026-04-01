@@ -178,7 +178,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onUpscale, onEditSav
   };
 
   // If editing, different view
-  if (isEditing && item.type === MediaType.IMAGE) {
+  if (isEditing && (item.type === MediaType.IMAGE || item.type === MediaType.LOGO)) {
     return (
        <div className="rounded-2xl overflow-hidden bg-slate-900 shadow-xl border border-slate-700 relative flex flex-col aspect-[4/3] md:aspect-[16/9]">
           {/* Editor Area */}
@@ -302,7 +302,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onUpscale, onEditSav
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 pointer-events-none">
           <div className="flex justify-end gap-2 pointer-events-auto">
              {/* AI Edit Toggle */}
-             {item.type === MediaType.IMAGE && onAIEdit && (
+             {(item.type === MediaType.IMAGE || item.type === MediaType.LOGO) && onAIEdit && (
                <button
                  onClick={(e) => {
                    e.stopPropagation();
@@ -318,7 +318,7 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onUpscale, onEditSav
              )}
 
              {/* Canvas Edit Toggle */}
-             {item.type === MediaType.IMAGE && onEditSave && (
+             {(item.type === MediaType.IMAGE || item.type === MediaType.LOGO) && onEditSave && (
                <button
                  onClick={(e) => {
                    e.stopPropagation();

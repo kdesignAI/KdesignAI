@@ -2,10 +2,12 @@ import { GoogleGenAI, Modality } from "@google/genai";
 import { MediaType, AspectRatio, AdvancedOptions } from '../types';
 
 // Models
-const IMAGEN_MODEL = 'imagen-4.0-generate-001';
-const VEO_MODEL = 'veo-3.1-fast-generate-preview';
-const EDIT_MODEL = 'gemini-3.1-flash-image-preview';
-const TEXT_MODEL = 'gemini-3.1-pro-preview';
+const IMAGE_MODEL = 'gemini-2.5-flash-image';
+const IMAGE_MODEL_4K = 'gemini-3.1-flash-image-preview';
+const VEO_MODEL = 'veo-3.1-lite-generate-preview';
+const EDIT_MODEL = 'gemini-2.5-flash-image';
+const EDIT_MODEL_4K = 'gemini-3.1-flash-image-preview';
+const TEXT_MODEL = 'gemini-2.5-flash';
 
 export const checkApiKeySelection = async (): Promise<void> => {
   if (window.aistudio) {
@@ -124,41 +126,9 @@ const handleGeminiError = (error: any): never => {
   throw new Error(message);
 };
 
-// Helper to enhance prompt using Gemini 3.1 Pro Preview
-export const enhancePrompt = async (prompt: string, mediaType: MediaType): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-  try {
-    return await retryWithBackoff(async () => {
-      const response = await ai.models.generateContent({
-        model: TEXT_MODEL,
-        contents: `You are an expert prompt engineer for AI image and video generation. 
-        Enhance the following user prompt for a ${mediaType} generation task. 
-        Make it more descriptive, artistic, and detailed to get the best possible result. 
-        Keep the core intent of the user. 
-        
-        CRITICAL FREEPIK/ADOBE STOCK GUIDELINES TO ENFORCE IN THE PROMPT:
-        1. No text, letters, watermarks, or signatures.
-        2. Perfect, flawless anatomy, logical structure, and realistic physical proportions (no extra fingers, limbs, mutated shapes, or distorted elements).
-        3. High commercial viability (clean composition, professional studio lighting).
-        4. If it's an isolated object or logo, specify a pure solid white background (#FFFFFF). DO NOT use words like "transparent" or "transparent background" as it generates fake checkerboard patterns.
-        5. No artifacts, noise, or blurry elements. Sharp focus and high resolution.
-        
-        Return ONLY the enhanced prompt text, no explanations.
-        
-        User Prompt: ${prompt}`,
-      });
-
-      return response.text || prompt;
-    });
-  } catch (error) {
-    console.error("Prompt enhancement failed:", error);
-    return prompt; // Fallback to original prompt
-  }
-};
-
 // Helper to upscale image
 export const upscaleImage = async (imageBase64: string, prompt: string): Promise<string> => {
+  await checkApiKeySelection();
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   // Extract valid base64 data
@@ -172,7 +142,7 @@ export const upscaleImage = async (imageBase64: string, prompt: string): Promise
   try {
     return await retryWithBackoff(async () => {
       const response = await ai.models.generateContent({
-        model: EDIT_MODEL,
+        model: EDIT_MODEL_4K,
         contents: {
           parts: [
             {
@@ -194,7 +164,19 @@ export const upscaleImage = async (imageBase64: string, prompt: string): Promise
       });
 
       const candidate = response.candidates?.[0];
-      const part = candidate?.content?.parts?.find(p => p.inlineData);
+      
+      if (!candidate) {
+        if (response.promptFeedback?.blockReason) {
+          throw new Error(`Prompt blocked by safety filters: ${response.promptFeedback.blockReason}`);
+        }
+        throw new Error(`No candidates returned. Response: ${JSON.stringify(response)}`);
+      }
+
+      if (!candidate.content || !candidate.content.parts) {
+        throw new Error(`No content parts returned. Finish reason: ${candidate.finishReason}. Response: ${JSON.stringify(response)}`);
+      }
+
+      const part = candidate.content.parts.find(p => p.inlineData);
       
       if (part?.inlineData?.data) {
         const returnMime = part.inlineData.mimeType || 'image/png';
@@ -202,15 +184,15 @@ export const upscaleImage = async (imageBase64: string, prompt: string): Promise
       }
 
       // Check for text refusal or safety stop
-      const textPart = candidate?.content?.parts?.find(p => p.text);
+      const textPart = candidate.content.parts.find(p => p.text);
       if (textPart?.text) {
           throw new Error(`Model refused to upscale: ${textPart.text}`);
       }
-      if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+      if (candidate.finishReason && candidate.finishReason !== 'STOP') {
           throw new Error(`Upscaling stopped due to: ${candidate.finishReason}`);
       }
       
-      throw new Error("Upscaling process completed but returned no image data.");
+      throw new Error(`Upscaling process completed but returned no image data. Parts: ${JSON.stringify(candidate.content.parts)}`);
     });
 
   } catch (error) {
@@ -221,6 +203,7 @@ export const upscaleImage = async (imageBase64: string, prompt: string): Promise
 
 // Helper to edit image with text prompt
 export const editImageWithPrompt = async (imageBase64: string, editPrompt: string): Promise<string> => {
+  await checkApiKeySelection();
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   // Extract valid base64 data
@@ -247,16 +230,23 @@ export const editImageWithPrompt = async (imageBase64: string, editPrompt: strin
               text: editPrompt
             }
           ]
-        },
-        config: {
-          imageConfig: {
-            imageSize: "1K"
-          }
         }
       });
 
       const candidate = response.candidates?.[0];
-      const part = candidate?.content?.parts?.find(p => p.inlineData);
+      
+      if (!candidate) {
+        if (response.promptFeedback?.blockReason) {
+          throw new Error(`Prompt blocked by safety filters: ${response.promptFeedback.blockReason}`);
+        }
+        throw new Error(`No candidates returned. Response: ${JSON.stringify(response)}`);
+      }
+
+      if (!candidate.content || !candidate.content.parts) {
+        throw new Error(`No content parts returned. Finish reason: ${candidate.finishReason}. Response: ${JSON.stringify(response)}`);
+      }
+
+      const part = candidate.content.parts.find(p => p.inlineData);
       
       if (part?.inlineData?.data) {
         const returnMime = part.inlineData.mimeType || 'image/png';
@@ -264,15 +254,15 @@ export const editImageWithPrompt = async (imageBase64: string, editPrompt: strin
       }
       
       // Check for text refusal or safety stop
-      const textPart = candidate?.content?.parts?.find(p => p.text);
+      const textPart = candidate.content.parts.find(p => p.text);
       if (textPart?.text) {
           throw new Error(`Model refused edit request: ${textPart.text}`);
       }
-      if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+      if (candidate.finishReason && candidate.finishReason !== 'STOP') {
           throw new Error(`Editing stopped due to: ${candidate.finishReason}`);
       }
       
-      throw new Error("AI editing process completed but returned no image data.");
+      throw new Error(`AI editing process completed but returned no image data. Parts: ${JSON.stringify(candidate.content.parts)}`);
     });
 
   } catch (error) {
@@ -283,6 +273,7 @@ export const editImageWithPrompt = async (imageBase64: string, editPrompt: strin
 
 // New Helper for Professional Manipulation
 export const manipulateImage = async (imageBase64: string, userPrompt: string, presetStyle: string): Promise<string> => {
+  await checkApiKeySelection();
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   // Extract valid base64 data
@@ -323,16 +314,23 @@ export const manipulateImage = async (imageBase64: string, userPrompt: string, p
               text: enhancedPrompt
             }
           ]
-        },
-        config: {
-          imageConfig: {
-            imageSize: "1K"
-          }
         }
       });
 
       const candidate = response.candidates?.[0];
-      const part = candidate?.content?.parts?.find(p => p.inlineData);
+      
+      if (!candidate) {
+        if (response.promptFeedback?.blockReason) {
+          throw new Error(`Prompt blocked by safety filters: ${response.promptFeedback.blockReason}`);
+        }
+        throw new Error(`No candidates returned. Response: ${JSON.stringify(response)}`);
+      }
+
+      if (!candidate.content || !candidate.content.parts) {
+        throw new Error(`No content parts returned. Finish reason: ${candidate.finishReason}. Response: ${JSON.stringify(response)}`);
+      }
+
+      const part = candidate.content.parts.find(p => p.inlineData);
       
       if (part?.inlineData?.data) {
         const returnMime = part.inlineData.mimeType || 'image/png';
@@ -340,83 +338,15 @@ export const manipulateImage = async (imageBase64: string, userPrompt: string, p
       }
 
       // Check for text refusal or safety stop
-      const textPart = candidate?.content?.parts?.find(p => p.text);
+      const textPart = candidate.content.parts.find(p => p.text);
       if (textPart?.text) {
           throw new Error(`Model cannot process image: ${textPart.text}`);
       }
-      if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+      if (candidate.finishReason && candidate.finishReason !== 'STOP') {
           throw new Error(`Manipulation stopped due to: ${candidate.finishReason}`);
       }
       
-      throw new Error("Manipulation process completed but returned no image data.");
-    });
-
-  } catch (error) {
-    handleGeminiError(error);
-    throw error;
-  }
-};
-
-// New Helper for Removing Background
-export const removeBackground = async (imageBase64: string): Promise<string> => {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-  // Extract valid base64 data
-  const matches = imageBase64.match(/^data:(.+);base64,(.+)$/);
-  if (!matches || matches.length !== 3) {
-    throw new Error("Invalid image data source for background removal.");
-  }
-  const mimeType = matches[1];
-  const data = matches[2];
-
-  const enhancedPrompt = `
-    Remove the background from this image. 
-    Output the image with a transparent background (PNG format). 
-    Keep the main subject perfectly isolated with clean edges.
-  `.trim();
-
-  try {
-    return await retryWithBackoff(async () => {
-      const response = await ai.models.generateContent({
-        model: EDIT_MODEL,
-        contents: {
-          parts: [
-            {
-              inlineData: {
-                mimeType: mimeType,
-                data: data
-              }
-            },
-            {
-              text: enhancedPrompt
-            }
-          ]
-        },
-        config: {
-          imageConfig: {
-            imageSize: "1K"
-          }
-        }
-      });
-
-      const candidate = response.candidates?.[0];
-      const part = candidate?.content?.parts?.find(p => p.inlineData);
-      
-      if (part?.inlineData?.data) {
-        const returnMime = part.inlineData.mimeType || 'image/png';
-        return `data:${returnMime};base64,${part.inlineData.data}`;
-      }
-
-      // Check for text refusal or safety stop
-      const textPart = candidate?.content?.parts?.find(p => p.text);
-      if (textPart?.text) {
-          throw new Error(`Model cannot process image: ${textPart.text}`);
-      }
-      if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
-          throw new Error(`Manipulation stopped due to: ${candidate.finishReason}`);
-      }
-      
-      throw new Error("Manipulation process completed but returned no image data.");
+      throw new Error(`Manipulation process completed but returned no image data. Parts: ${JSON.stringify(candidate.content.parts)}`);
     });
 
   } catch (error) {
@@ -427,6 +357,7 @@ export const removeBackground = async (imageBase64: string): Promise<string> => 
 
 // New Helper for Logo Generation
 export const generateLogo = async (prompt: string, presetStyle: string): Promise<string> => {
+  await checkApiKeySelection();
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   // Construct optimized prompt for logo generation
@@ -437,34 +368,56 @@ export const generateLogo = async (prompt: string, presetStyle: string): Promise
     
     Requirements:
     1. Clean, vector-style aesthetics.
-    2. Pure solid white background (#FFFFFF). DO NOT generate checkerboard patterns.
+    2. Solid white background (easy to remove).
     3. Clear shapes, excellent composition.
     4. Scalable look, suitable for branding.
     5. High resolution, sharp edges.
-    6. Must be suitable for stock marketplaces like Freepik or Adobe Stock.
-    7. NO text, letters, watermarks, or signatures.
   `.trim();
-
-  const config: any = {
-    numberOfImages: 1,
-    outputMimeType: 'image/jpeg',
-    aspectRatio: '1:1', // Logos are typically square
-  };
 
   try {
     return await retryWithBackoff(async () => {
-      const response = await ai.models.generateImages({
-        model: IMAGEN_MODEL,
-        prompt: enhancedPrompt,
-        config: config,
+      const response = await ai.models.generateContent({
+        model: IMAGE_MODEL,
+        contents: {
+          parts: [{ text: enhancedPrompt }]
+        },
+        config: {
+          imageConfig: {
+            aspectRatio: "1:1"
+          }
+        }
       });
 
-      const base64ImageBytes = response.generatedImages?.[0]?.image?.imageBytes;
-      if (!base64ImageBytes) {
-        throw new Error("No logo data returned from API.");
+      const candidate = response.candidates?.[0];
+      
+      if (!candidate) {
+        if (response.promptFeedback?.blockReason) {
+          throw new Error(`Prompt blocked by safety filters: ${response.promptFeedback.blockReason}`);
+        }
+        throw new Error(`No candidates returned. Response: ${JSON.stringify(response)}`);
       }
 
-      return `data:image/jpeg;base64,${base64ImageBytes}`;
+      if (!candidate.content || !candidate.content.parts) {
+        throw new Error(`No content parts returned. Finish reason: ${candidate.finishReason}. Response: ${JSON.stringify(response)}`);
+      }
+
+      const part = candidate.content.parts.find(p => p.inlineData);
+      
+      if (part?.inlineData?.data) {
+        const returnMime = part.inlineData.mimeType || 'image/jpeg';
+        return `data:${returnMime};base64,${part.inlineData.data}`;
+      }
+
+      // Check for text refusal or safety stop
+      const textPart = candidate.content.parts.find(p => p.text);
+      if (textPart?.text) {
+          throw new Error(`Model refused to generate logo: ${textPart.text}`);
+      }
+      if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+          throw new Error(`Logo generation stopped due to: ${candidate.finishReason}`);
+      }
+      
+      throw new Error(`No logo data returned from API. Parts: ${JSON.stringify(candidate.content.parts)}`);
     });
 
   } catch (error) {
@@ -478,6 +431,7 @@ export const generateImage = async (
   aspectRatio: AspectRatio,
   options?: AdvancedOptions
 ): Promise<string> => {
+  await checkApiKeySelection();
   // Always instantiate fresh to capture any key updates
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -490,40 +444,59 @@ export const generateImage = async (
   
   if (options?.negativePrompt) {
     // Appending negative prompt instruction is a robust way to handle exclusions
-    finalPrompt += `. (Exclude: ${options.negativePrompt}, text, watermarks, signatures, bad anatomy, extra limbs, mutated, deformed, disfigured, poorly drawn, disproportionate, weird shapes, illogical structure, blurry, artifacts, checkerboard background, fake transparency)`;
-  } else {
-    finalPrompt += `. (Exclude: text, watermarks, signatures, bad anatomy, extra limbs, mutated, deformed, disfigured, poorly drawn, disproportionate, weird shapes, illogical structure, blurry, artifacts, checkerboard background, fake transparency)`;
+    finalPrompt += `. (Exclude: ${options.negativePrompt})`;
   }
-
-  finalPrompt += `. Ensure the image is of premium stock photo quality, suitable for marketplaces like Freepik or Adobe Stock. The background should be clean and pure solid white (#FFFFFF). Ensure perfect, flawless anatomy, logical structure, and realistic physical proportions. Sharp focus, and professional studio lighting. DO NOT generate checkerboard patterns.`;
-
-  // Prepare config
-  const config: any = {
-    numberOfImages: 1,
-    outputMimeType: 'image/jpeg',
-    aspectRatio: aspectRatio,
-  };
 
   try {
     let finalImage = await retryWithBackoff(async () => {
-      const response = await ai.models.generateImages({
-        model: IMAGEN_MODEL,
-        prompt: finalPrompt,
-        config: config,
+      const response = await ai.models.generateContent({
+        model: options?.upscale4K ? IMAGE_MODEL_4K : IMAGE_MODEL,
+        contents: {
+          parts: [{ text: finalPrompt }]
+        },
+        config: {
+          imageConfig: {
+            aspectRatio: aspectRatio,
+            ...(options?.upscale4K ? { imageSize: "4K" } : {})
+          }
+        }
       });
 
-      const base64ImageBytes = response.generatedImages?.[0]?.image?.imageBytes;
-      if (!base64ImageBytes) {
-        throw new Error("No image data returned from API.");
+      const candidate = response.candidates?.[0];
+      
+      if (!candidate) {
+        if (response.promptFeedback?.blockReason) {
+          throw new Error(`Prompt blocked by safety filters: ${response.promptFeedback.blockReason}`);
+        }
+        throw new Error(`No candidates returned. Response: ${JSON.stringify(response)}`);
       }
 
-      return `data:image/jpeg;base64,${base64ImageBytes}`;
+      if (!candidate.content || !candidate.content.parts) {
+        throw new Error(`No content parts returned. Finish reason: ${candidate.finishReason}. Response: ${JSON.stringify(response)}`);
+      }
+
+      const part = candidate.content.parts.find(p => p.inlineData);
+      
+      if (part?.inlineData?.data) {
+        const returnMime = part.inlineData.mimeType || 'image/jpeg';
+        return `data:${returnMime};base64,${part.inlineData.data}`;
+      }
+
+      // Check for text refusal or safety stop
+      const textPart = candidate.content.parts.find(p => p.text);
+      if (textPart?.text) {
+          throw new Error(`Model refused to generate image: ${textPart.text}`);
+      }
+      if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+          throw new Error(`Image generation stopped due to: ${candidate.finishReason}`);
+      }
+      
+      throw new Error(`No image data returned from API. Parts: ${JSON.stringify(candidate.content.parts)}`);
     });
 
-    // Apply upscale if requested
-    if (options?.upscale4K) {
-      finalImage = await upscaleImage(finalImage, finalPrompt);
-    }
+    // Note: upscale4K is now handled natively by the model via imageSize: "4K"
+    // We no longer need to call upscaleImage separately if it's already generated at 4K.
+    // However, if the user specifically requested upscaling of an existing image, that's handled elsewhere.
 
     return finalImage;
   } catch (error) {
