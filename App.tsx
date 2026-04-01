@@ -3,6 +3,7 @@ import { Header } from './components/Header';
 import { MediaCard } from './components/MediaCard';
 import { LoadingState } from './components/LoadingState';
 import { ErrorMessage } from './components/ErrorMessage';
+import { ApiKeyModal } from './components/ApiKeyModal';
 import { GeneratedItem, MediaType, AspectRatio, AdvancedOptions } from './types';
 import { generateImage, generateVideo, upscaleImage, editImageWithPrompt, manipulateImage, generateLogo } from './services/gemini';
 import { generateExternalImage, ExternalApiConfig } from './services/external';
@@ -231,6 +232,7 @@ function App() {
   
   // External API State
   const [apiProvider, setApiProvider] = useState<'gemini' | 'external'>('gemini');
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
   const [externalConfig, setExternalConfig] = useState<ExternalApiConfig>(() => {
     try {
       const saved = localStorage.getItem('solaris_external_config');
@@ -381,7 +383,12 @@ function App() {
 
       setHistory(prev => [newItem, ...prev]);
     } catch (err: any) {
-      setError(err.message || "An unknown error occurred during generation.");
+      if (err.message === "CUSTOM_API_KEY_REQUIRED") {
+        setShowApiKeyModal(true);
+        setError("Please set your Gemini API key to continue.");
+      } else {
+        setError(err.message || "An unknown error occurred during generation.");
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -414,7 +421,12 @@ function App() {
 
       setHistory(prev => [newItem, ...prev]);
     } catch (err: any) {
-      setError("Failed to upscale image: " + err.message);
+      if (err.message === "CUSTOM_API_KEY_REQUIRED") {
+        setShowApiKeyModal(true);
+        setError("Please set your Gemini API key to continue.");
+      } else {
+        setError("Failed to upscale image: " + err.message);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -447,7 +459,12 @@ function App() {
 
       setHistory(prev => [newItem, ...prev]);
     } catch (err: any) {
-      setError("Failed to edit image: " + err.message);
+      if (err.message === "CUSTOM_API_KEY_REQUIRED") {
+        setShowApiKeyModal(true);
+        setError("Please set your Gemini API key to continue.");
+      } else {
+        setError("Failed to edit image: " + err.message);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -477,7 +494,19 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <Header />
+      <Header onOpenSettings={() => setShowApiKeyModal(true)} />
+
+      <ApiKeyModal 
+        isOpen={showApiKeyModal} 
+        onClose={() => setShowApiKeyModal(false)}
+        onSave={(key) => {
+          // Optional: trigger a re-generation or just close
+          if (error === "Please set your Gemini API key to continue.") {
+            setError(null);
+          }
+        }}
+        initialKey={localStorage.getItem('custom_gemini_api_key') || ''}
+      />
 
       <main className="flex-1 flex flex-col">
         {/* Hero / Input Section */}
@@ -796,12 +825,12 @@ function App() {
                                 // @ts-ignore
                                 await window.aistudio.openSelectKey();
                               } else {
-                                alert("API Key selection is not available in this environment.");
+                                setShowApiKeyModal(true);
                               }
                             }}
                             className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-md transition-colors whitespace-nowrap"
                           >
-                            Select API Key
+                            Set API Key
                           </button>
                         </div>
                       )}

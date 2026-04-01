@@ -9,13 +9,25 @@ const EDIT_MODEL = 'gemini-2.5-flash-image';
 const EDIT_MODEL_4K = 'gemini-3.1-flash-image-preview';
 const TEXT_MODEL = 'gemini-2.5-flash';
 
-export const checkApiKeySelection = async (): Promise<void> => {
+export const getValidApiKey = async (): Promise<string> => {
   if (window.aistudio) {
     const hasKey = await window.aistudio.hasSelectedApiKey();
     if (!hasKey) {
       await window.aistudio.openSelectKey();
     }
+    return process.env.API_KEY || '';
   }
+  
+  const customKey = localStorage.getItem('custom_gemini_api_key');
+  if (customKey) {
+    return customKey;
+  }
+  
+  if (process.env.API_KEY && process.env.API_KEY !== 'PLACEHOLDER_API_KEY' && process.env.API_KEY !== 'undefined') {
+    return process.env.API_KEY;
+  }
+  
+  throw new Error("CUSTOM_API_KEY_REQUIRED");
 };
 
 // Helper to convert Blob to Base64 for storage persistence
@@ -123,13 +135,17 @@ const handleGeminiError = (error: any): never => {
       }
   }
 
+  if (message.includes("API key not valid") || message.includes("API_KEY_INVALID") || message.includes("API key not found") || message.includes("unauthenticated")) {
+      throw new Error("CUSTOM_API_KEY_REQUIRED");
+  }
+
   throw new Error(message);
 };
 
 // Helper to upscale image
 export const upscaleImage = async (imageBase64: string, prompt: string): Promise<string> => {
-  await checkApiKeySelection();
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = await getValidApiKey();
+  const ai = new GoogleGenAI({ apiKey });
 
   // Extract valid base64 data
   const matches = imageBase64.match(/^data:(.+);base64,(.+)$/);
@@ -203,8 +219,8 @@ export const upscaleImage = async (imageBase64: string, prompt: string): Promise
 
 // Helper to edit image with text prompt
 export const editImageWithPrompt = async (imageBase64: string, editPrompt: string): Promise<string> => {
-  await checkApiKeySelection();
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = await getValidApiKey();
+  const ai = new GoogleGenAI({ apiKey });
 
   // Extract valid base64 data
   const matches = imageBase64.match(/^data:(.+);base64,(.+)$/);
@@ -273,8 +289,8 @@ export const editImageWithPrompt = async (imageBase64: string, editPrompt: strin
 
 // New Helper for Professional Manipulation
 export const manipulateImage = async (imageBase64: string, userPrompt: string, presetStyle: string): Promise<string> => {
-  await checkApiKeySelection();
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = await getValidApiKey();
+  const ai = new GoogleGenAI({ apiKey });
 
   // Extract valid base64 data
   const matches = imageBase64.match(/^data:(.+);base64,(.+)$/);
@@ -357,8 +373,8 @@ export const manipulateImage = async (imageBase64: string, userPrompt: string, p
 
 // New Helper for Logo Generation
 export const generateLogo = async (prompt: string, presetStyle: string): Promise<string> => {
-  await checkApiKeySelection();
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const apiKey = await getValidApiKey();
+  const ai = new GoogleGenAI({ apiKey });
 
   // Construct optimized prompt for logo generation
   const enhancedPrompt = `
@@ -431,9 +447,9 @@ export const generateImage = async (
   aspectRatio: AspectRatio,
   options?: AdvancedOptions
 ): Promise<string> => {
-  await checkApiKeySelection();
+  const apiKey = await getValidApiKey();
   // Always instantiate fresh to capture any key updates
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
 
   // Construct enhanced prompt based on advanced options
   let finalPrompt = prompt;
@@ -509,11 +525,10 @@ export const generateVideo = async (
   prompt: string,
   aspectRatio: AspectRatio
 ): Promise<string> => {
-  // Veo specifically requires the user to select a key in some environments
-  await checkApiKeySelection();
+  const apiKey = await getValidApiKey();
   
   // Re-instantiate after potential key selection
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey });
 
   // STRICT VALIDATION: Veo only supports 16:9 or 9:16.
   // We do not auto-correct here to respect the application's validation logic.
@@ -548,7 +563,7 @@ export const generateVideo = async (
       }
 
       // Fetch the actual video bytes
-      const videoResponse = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+      const videoResponse = await fetch(`${downloadLink}&key=${apiKey}`);
       if (!videoResponse.ok) {
         throw new Error("Failed to download generated video.");
       }
