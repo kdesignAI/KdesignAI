@@ -4,8 +4,8 @@ import { MediaType, AspectRatio, AdvancedOptions } from '../types';
 // Models
 const IMAGEN_MODEL = 'imagen-4.0-generate-001';
 const VEO_MODEL = 'veo-3.1-fast-generate-preview';
-const EDIT_MODEL = 'gemini-2.5-flash-image';
-const TEXT_MODEL = 'gemini-2.5-flash';
+const EDIT_MODEL = 'gemini-3.1-flash-image-preview';
+const TEXT_MODEL = 'gemini-3.1-pro-preview';
 
 export const checkApiKeySelection = async (): Promise<void> => {
   if (window.aistudio) {
@@ -124,6 +124,39 @@ const handleGeminiError = (error: any): never => {
   throw new Error(message);
 };
 
+// Helper to enhance prompt using Gemini 3.1 Pro Preview
+export const enhancePrompt = async (prompt: string, mediaType: MediaType): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  try {
+    return await retryWithBackoff(async () => {
+      const response = await ai.models.generateContent({
+        model: TEXT_MODEL,
+        contents: `You are an expert prompt engineer for AI image and video generation. 
+        Enhance the following user prompt for a ${mediaType} generation task. 
+        Make it more descriptive, artistic, and detailed to get the best possible result. 
+        Keep the core intent of the user. 
+        
+        CRITICAL FREEPIK/ADOBE STOCK GUIDELINES TO ENFORCE IN THE PROMPT:
+        1. No text, letters, watermarks, or signatures.
+        2. Perfect, flawless anatomy, logical structure, and realistic physical proportions (no extra fingers, limbs, mutated shapes, or distorted elements).
+        3. High commercial viability (clean composition, professional studio lighting).
+        4. If it's an isolated object or logo, specify a pure solid white background (#FFFFFF). DO NOT use words like "transparent" or "transparent background" as it generates fake checkerboard patterns.
+        5. No artifacts, noise, or blurry elements. Sharp focus and high resolution.
+        
+        Return ONLY the enhanced prompt text, no explanations.
+        
+        User Prompt: ${prompt}`,
+      });
+
+      return response.text || prompt;
+    });
+  } catch (error) {
+    console.error("Prompt enhancement failed:", error);
+    return prompt; // Fallback to original prompt
+  }
+};
+
 // Helper to upscale image
 export const upscaleImage = async (imageBase64: string, prompt: string): Promise<string> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -154,7 +187,9 @@ export const upscaleImage = async (imageBase64: string, prompt: string): Promise
           ]
         },
         config: {
-          responseModalities: [Modality.IMAGE],
+          imageConfig: {
+            imageSize: "4K"
+          }
         }
       });
 
@@ -214,7 +249,9 @@ export const editImageWithPrompt = async (imageBase64: string, editPrompt: strin
           ]
         },
         config: {
-          responseModalities: [Modality.IMAGE],
+          imageConfig: {
+            imageSize: "1K"
+          }
         }
       });
 
@@ -288,7 +325,77 @@ export const manipulateImage = async (imageBase64: string, userPrompt: string, p
           ]
         },
         config: {
-          responseModalities: [Modality.IMAGE],
+          imageConfig: {
+            imageSize: "1K"
+          }
+        }
+      });
+
+      const candidate = response.candidates?.[0];
+      const part = candidate?.content?.parts?.find(p => p.inlineData);
+      
+      if (part?.inlineData?.data) {
+        const returnMime = part.inlineData.mimeType || 'image/png';
+        return `data:${returnMime};base64,${part.inlineData.data}`;
+      }
+
+      // Check for text refusal or safety stop
+      const textPart = candidate?.content?.parts?.find(p => p.text);
+      if (textPart?.text) {
+          throw new Error(`Model cannot process image: ${textPart.text}`);
+      }
+      if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+          throw new Error(`Manipulation stopped due to: ${candidate.finishReason}`);
+      }
+      
+      throw new Error("Manipulation process completed but returned no image data.");
+    });
+
+  } catch (error) {
+    handleGeminiError(error);
+    throw error;
+  }
+};
+
+// New Helper for Removing Background
+export const removeBackground = async (imageBase64: string): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+  // Extract valid base64 data
+  const matches = imageBase64.match(/^data:(.+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) {
+    throw new Error("Invalid image data source for background removal.");
+  }
+  const mimeType = matches[1];
+  const data = matches[2];
+
+  const enhancedPrompt = `
+    Remove the background from this image. 
+    Output the image with a transparent background (PNG format). 
+    Keep the main subject perfectly isolated with clean edges.
+  `.trim();
+
+  try {
+    return await retryWithBackoff(async () => {
+      const response = await ai.models.generateContent({
+        model: EDIT_MODEL,
+        contents: {
+          parts: [
+            {
+              inlineData: {
+                mimeType: mimeType,
+                data: data
+              }
+            },
+            {
+              text: enhancedPrompt
+            }
+          ]
+        },
+        config: {
+          imageConfig: {
+            imageSize: "1K"
+          }
         }
       });
 
@@ -330,10 +437,12 @@ export const generateLogo = async (prompt: string, presetStyle: string): Promise
     
     Requirements:
     1. Clean, vector-style aesthetics.
-    2. Solid white background (easy to remove).
+    2. Pure solid white background (#FFFFFF). DO NOT generate checkerboard patterns.
     3. Clear shapes, excellent composition.
     4. Scalable look, suitable for branding.
     5. High resolution, sharp edges.
+    6. Must be suitable for stock marketplaces like Freepik or Adobe Stock.
+    7. NO text, letters, watermarks, or signatures.
   `.trim();
 
   const config: any = {
@@ -381,8 +490,12 @@ export const generateImage = async (
   
   if (options?.negativePrompt) {
     // Appending negative prompt instruction is a robust way to handle exclusions
-    finalPrompt += `. (Exclude: ${options.negativePrompt})`;
+    finalPrompt += `. (Exclude: ${options.negativePrompt}, text, watermarks, signatures, bad anatomy, extra limbs, mutated, deformed, disfigured, poorly drawn, disproportionate, weird shapes, illogical structure, blurry, artifacts, checkerboard background, fake transparency)`;
+  } else {
+    finalPrompt += `. (Exclude: text, watermarks, signatures, bad anatomy, extra limbs, mutated, deformed, disfigured, poorly drawn, disproportionate, weird shapes, illogical structure, blurry, artifacts, checkerboard background, fake transparency)`;
   }
+
+  finalPrompt += `. Ensure the image is of premium stock photo quality, suitable for marketplaces like Freepik or Adobe Stock. The background should be clean and pure solid white (#FFFFFF). Ensure perfect, flawless anatomy, logical structure, and realistic physical proportions. Sharp focus, and professional studio lighting. DO NOT generate checkerboard patterns.`;
 
   // Prepare config
   const config: any = {

@@ -1,5 +1,5 @@
 {
-  "name": "Solaris AI Studio",
-  "description": "A vibrant generative AI studio for creating high-energy images and videos using Google's Imagen and Veo models.",
+  "name": "Professional Photo Enhancer",
+  "description": "A professional photo enhancer tool to resize images to 1600px and apply professional color contrast and shadow adjustments.",
   "requestFramePermissions": []
 }
