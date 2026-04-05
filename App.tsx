@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { ThemeProvider, createTheme, CssBaseline, Container, Box, Typography, TextField, Button, Grid, Paper, ToggleButtonGroup, ToggleButton, Select, MenuItem, FormControl, InputLabel, Accordion, AccordionSummary, AccordionDetails, IconButton, Tooltip, Chip, Collapse, InputAdornment, CircularProgress } from '@mui/material';
 import { Header } from './components/Header';
 import { MediaCard } from './components/MediaCard';
 import { LoadingState } from './components/LoadingState';
@@ -8,6 +9,140 @@ import { GeneratedItem, MediaType, AspectRatio, AdvancedOptions } from './types'
 import { generateImage, generateVideo, upscaleImage, editImageWithPrompt, manipulateImage, generateLogo } from './services/gemini';
 import { generateExternalImage, ExternalApiConfig } from './services/external';
 import { Sparkles, Film, Image as ImageIcon, Settings2, ChevronDown, ChevronUp, Dices, Lightbulb, ScanLine, Wand2, Upload, X, PenTool, Palette, Ban, Hash, Check, Globe, Key } from 'lucide-react';
+
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: '#0f172a', // slate-900
+      light: '#334155', // slate-700
+      dark: '#020617', // slate-950
+    },
+    secondary: {
+      main: '#3b82f6', // blue-500
+      light: '#60a5fa', // blue-400
+      dark: '#2563eb', // blue-600
+    },
+    background: {
+      default: '#f8fafc', // slate-50
+      paper: '#ffffff',
+    },
+    text: {
+      primary: '#0f172a', // slate-900
+      secondary: '#64748b', // slate-500
+    },
+    divider: '#e2e8f0', // slate-200
+  },
+  typography: {
+    fontFamily: '"Plus Jakarta Sans", "Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    h1: { fontWeight: 800, letterSpacing: '-0.025em' },
+    h2: { fontWeight: 800, letterSpacing: '-0.025em' },
+    h3: { fontWeight: 700, letterSpacing: '-0.025em' },
+    h4: { fontWeight: 700, letterSpacing: '-0.02em' },
+    h5: { fontWeight: 600, letterSpacing: '-0.01em' },
+    h6: { fontWeight: 600 },
+    subtitle1: { fontWeight: 500 },
+    subtitle2: { fontWeight: 500 },
+    button: {
+      textTransform: 'none',
+      fontWeight: 600,
+      letterSpacing: '0.01em',
+    },
+  },
+  shape: {
+    borderRadius: 16,
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          boxShadow: 'none',
+          borderRadius: '12px',
+          padding: '10px 24px',
+          '&:hover': {
+            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+            transform: 'translateY(-1px)',
+          },
+          transition: 'all 0.2s ease-in-out',
+        },
+        containedPrimary: {
+          background: 'linear-gradient(135deg, #0f172a 0%, #334155 100%)',
+          '&:hover': {
+            background: 'linear-gradient(135deg, #020617 0%, #0f172a 100%)',
+          }
+        }
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: 'none',
+        },
+        elevation1: {
+          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+        },
+        elevation2: {
+          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+        },
+        elevation3: {
+          boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+        },
+      },
+    },
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '12px',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover fieldset': {
+              borderColor: '#94a3b8',
+            },
+            '&.Mui-focused fieldset': {
+              borderWidth: '2px',
+            },
+          },
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          borderRadius: '12px',
+        },
+      },
+    },
+    MuiToggleButtonGroup: {
+      styleOverrides: {
+        root: {
+          borderRadius: '12px',
+          padding: '4px',
+          backgroundColor: '#f1f5f9',
+          border: '1px solid #e2e8f0',
+        },
+      },
+    },
+    MuiToggleButton: {
+      styleOverrides: {
+        root: {
+          border: 'none',
+          borderRadius: '8px !important',
+          margin: '0 2px',
+          textTransform: 'none',
+          fontWeight: 500,
+          color: '#64748b',
+          '&.Mui-selected': {
+            backgroundColor: '#ffffff',
+            color: '#0f172a',
+            boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+            '&:hover': {
+              backgroundColor: '#ffffff',
+            },
+          },
+        },
+      },
+    },
+  },
+});
 
 const DEFAULT_PROMPT = "A woman, exuberantly smiling and wearing sunglasses and a red jacket, leans forward against a vibrant blue sky. Behind her, a red car speeds by on a sunlit street, with a rusted metal fence as a backdrop. The image exudes energy, joy, and a sense of carefree movement.";
 const STORAGE_KEY = 'solaris_history';
@@ -55,7 +190,17 @@ const STYLE_PRESETS = [
   'Cel-Shaded Art',
   'Neon Dual Lighting',
   'Synthwave Portrait',
-  'Stylized 3D Character'
+  'Stylized 3D Character',
+  'Retro Minimalist',
+  'Modern Emblem',
+  'Abstract Geometric',
+  'Mascot Character',
+  'Vintage Badge',
+  'Typographic Monogram',
+  'Futuristic Tech',
+  'Organic Hand-drawn',
+  'Negative Space',
+  'Luxury Gold & Black'
 ];
 
 const LOGO_PRESETS = [
@@ -106,7 +251,28 @@ const LOGO_PRESETS = [
   'Heraldic Crest',
   'Playful Cartoon',
   'Minimalist Clean',
-  'Vintage Stamp'
+  'Vintage Stamp',
+  // Conceptual Presets
+  'Eco-Friendly & Sustainable',
+  'Zen & Mindfulness',
+  'Quantum Computing',
+  'Cosmic & Astronomical',
+  'Biomimicry & Nature-Inspired',
+  'Data Flow & Connectivity',
+  'Optical Illusion',
+  'Kinetic Typography',
+  'Fluid Dynamics',
+  'Sacred Geometry',
+  'Cybernetic Organism',
+  'Holographic Projection',
+  'Ethereal & Dreamlike',
+  'Brutalist Architecture',
+  'Alchemy & Mysticism',
+  'Soundwave & Audio',
+  'Microscopic Cellular',
+  'Time & Chronology',
+  'Metamorphosis & Evolution',
+  'Paradox & Impossible Shapes'
 ];
 
 const MANIPULATION_PRESETS = [
@@ -493,332 +659,417 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <Header onOpenSettings={() => setShowApiKeyModal(true)} />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'background.default' }}>
+        <Header onOpenSettings={() => setShowApiKeyModal(true)} />
 
-      <ApiKeyModal 
-        isOpen={showApiKeyModal} 
-        onClose={() => setShowApiKeyModal(false)}
-        onSave={(key) => {
-          // Optional: trigger a re-generation or just close
-          if (error === "Please set your Gemini API key to continue.") {
-            setError(null);
-          }
-        }}
-        initialKey={localStorage.getItem('custom_gemini_api_key') || ''}
-      />
+        <ApiKeyModal 
+          isOpen={showApiKeyModal} 
+          onClose={() => setShowApiKeyModal(false)}
+          onSave={(key) => {
+            if (error === "Please set your Gemini API key to continue.") {
+              setError(null);
+            }
+          }}
+          initialKey={localStorage.getItem('custom_gemini_api_key') || ''}
+        />
 
-      <main className="flex-1 flex flex-col">
-        {/* Hero / Input Section */}
-        <section className="relative bg-white border-b border-slate-200 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-brand-blue/5 to-brand-red/5 pointer-events-none"></div>
+        <Box component="main" sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {/* Hero / Input Section */}
+        <Box sx={{ position: 'relative', bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider', overflow: 'hidden' }}>
+          {/* Modern Background Elements */}
+          <Box sx={{ position: 'absolute', top: '-20%', left: '-10%', width: '50%', height: '100%', background: 'radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, rgba(255,255,255,0) 70%)', pointerEvents: 'none' }} />
+          <Box sx={{ position: 'absolute', bottom: '-20%', right: '-10%', width: '50%', height: '100%', background: 'radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(255,255,255,0) 70%)', pointerEvents: 'none' }} />
           
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 relative">
-            <div className="text-center mb-8">
-              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 mb-4">
-                Visualize the <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-blue to-brand-red">Extraordinary</span>
-              </h1>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-                Transform your words into vivid images, videos, professional logos, and creative manipulations using Google's Gemini & Veo models.
-              </p>
-            </div>
+          <Container maxWidth="md" sx={{ py: { xs: 6, lg: 10 }, position: 'relative', zIndex: 1 }}>
+            <Box sx={{ textAlign: 'center', mb: 6 }}>
+              <Chip 
+                label="Powered by Gemini 3.1 & Veo 3.1" 
+                size="small" 
+                sx={{ mb: 3, bgcolor: 'primary.50', color: 'primary.main', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: '0.7rem', border: '1px solid', borderColor: 'primary.100' }} 
+              />
+              <Typography variant="h2" component="h1" fontWeight="800" sx={{ mb: 2, color: 'grey.900', letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+                Visualize the <Box component="span" sx={{ background: 'linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Extraordinary</Box>
+              </Typography>
+              <Typography variant="h6" color="text.secondary" sx={{ maxWidth: 'md', mx: 'auto', fontWeight: 500, lineHeight: 1.6 }}>
+                Transform your words into vivid images, cinematic videos, professional logos, and creative manipulations with next-generation AI.
+              </Typography>
+            </Box>
 
-            <div className="bg-white rounded-2xl shadow-xl border border-slate-200 p-4 md:p-6 transition-all duration-300">
+            <Paper elevation={0} sx={{ p: { xs: 2, md: 4 }, borderRadius: 4, border: '1px solid', borderColor: 'rgba(0,0,0,0.08)', bgcolor: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(24px)', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.05), 0 0 0 1px rgb(0 0 0 / 0.02)', transition: 'all 0.3s' }}>
               
               {/* File Upload Area (Only for Manipulation) */}
               {mediaType === MediaType.MANIPULATION && (
-                <div className="mb-6 animate-in fade-in zoom-in duration-300">
+                <Box sx={{ mb: 3, animation: 'fadeIn 0.3s' }}>
                   {!uploadedImage ? (
-                    <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                        <Upload className="w-10 h-10 text-slate-400 mb-2" />
-                        <p className="mb-2 text-sm text-slate-500 font-semibold">Click to upload or drag and drop</p>
-                        <p className="text-xs text-slate-400">SVG, PNG, JPG or GIF</p>
-                      </div>
-                      <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
-                    </label>
+                    <Box component="label" sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: 192, border: '2px dashed', borderColor: 'grey.300', borderRadius: 3, cursor: 'pointer', bgcolor: 'rgba(248, 250, 252, 0.5)', '&:hover': { bgcolor: 'grey.50', borderColor: 'primary.main' }, transition: 'all 0.2s' }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pt: 5, pb: 6 }}>
+                        <Box sx={{ p: 2, bgcolor: 'white', borderRadius: '50%', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)', mb: 2 }}>
+                          <Upload size={24} color="#64748b" />
+                        </Box>
+                        <Typography variant="body2" fontWeight="600" color="text.primary" sx={{ mb: 0.5 }}>Click to upload or drag and drop</Typography>
+                        <Typography variant="caption" color="text.secondary">SVG, PNG, JPG or GIF (max. 10MB)</Typography>
+                      </Box>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} style={{ display: 'none' }} />
+                    </Box>
                   ) : (
-                    <div className="relative w-full h-48 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center group">
-                      <img src={uploadedImage} alt="Uploaded" className="h-full w-auto object-contain" />
-                      <button 
-                        onClick={() => setUploadedImage(null)}
-                        className="absolute top-2 right-2 p-1.5 bg-black/50 text-white rounded-full hover:bg-red-500 transition-colors"
-                        title="Remove Image"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                      <div className="absolute inset-0 bg-black/20 pointer-events-none group-hover:bg-black/10 transition-colors" />
-                      <span className="absolute bottom-2 left-2 px-2 py-1 bg-black/60 text-white text-xs rounded backdrop-blur">Source Image</span>
-                    </div>
+                    <Box sx={{ position: 'relative', width: '100%', height: 192, bgcolor: 'grey.100', borderRadius: 3, overflow: 'hidden', border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'center', '&:hover .overlay': { opacity: 1 } }}>
+                      <img src={uploadedImage} alt="Uploaded" style={{ height: '100%', width: 'auto', objectFit: 'contain' }} />
+                      <Box className="overlay" sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,0.4)', opacity: 0, transition: 'opacity 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <IconButton 
+                          onClick={() => setUploadedImage(null)}
+                          sx={{ bgcolor: 'white', color: 'error.main', '&:hover': { bgcolor: 'error.50' }, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                        >
+                          <X size={20} />
+                        </IconButton>
+                      </Box>
+                      <Chip label="Source Image" size="small" sx={{ position: 'absolute', bottom: 12, left: 12, bgcolor: 'rgba(0,0,0,0.6)', color: 'white', backdropFilter: 'blur(4px)', fontWeight: 600 }} />
+                    </Box>
                   )}
-                </div>
+                </Box>
               )}
 
-              <div className="relative">
-                <textarea
+              <Box sx={{ position: 'relative' }}>
+                <TextField
+                  multiline
+                  rows={4}
+                  fullWidth
                   value={prompt}
                   onChange={(e) => {
                     setPrompt(e.target.value);
                     if (error && e.target.value.trim()) setError(null);
                   }}
                   placeholder={getPlaceholderText()}
-                  className={`w-full h-32 p-4 text-lg text-slate-800 placeholder:text-slate-400 bg-slate-50 rounded-xl border focus:ring-2 focus:ring-brand-blue resize-none transition-shadow ${error && !prompt.trim() ? 'border-red-300 focus:ring-red-200' : 'border-transparent'}`}
+                  variant="outlined"
+                  error={!!error && !prompt.trim()}
+                  sx={{ 
+                    bgcolor: 'white', 
+                    '& .MuiOutlinedInput-root': { 
+                      borderRadius: 3,
+                      fontSize: '1.125rem',
+                      p: 2.5,
+                      boxShadow: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.02)',
+                      '& fieldset': { borderColor: 'rgba(0,0,0,0.1)' },
+                      '&:hover fieldset': { borderColor: 'rgba(0,0,0,0.2)' },
+                      '&.Mui-focused fieldset': { borderColor: 'primary.main', borderWidth: '2px' }
+                    } 
+                  }}
                 />
-                <div className="absolute bottom-3 right-3 text-xs text-slate-400 bg-slate-100 px-2 py-1 rounded-md">
-                  {prompt.length} chars
-                </div>
-              </div>
+                <Box sx={{ position: 'absolute', bottom: 16, right: 16 }}>
+                  <Chip label={`${prompt.length} chars`} size="small" sx={{ bgcolor: 'grey.50', color: 'text.secondary', fontSize: '0.7rem', fontWeight: 600, border: '1px solid', borderColor: 'divider' }} />
+                </Box>
+              </Box>
 
               {/* Prompt Suggestions */}
-              <div className="mt-3 flex flex-wrap items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-300">
-                <div className="flex items-center gap-1 text-xs font-semibold text-slate-400 uppercase tracking-wider mr-1 select-none">
-                  <Lightbulb className="w-3 h-3" />
+              <Box sx={{ mt: 2.5, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.disabled', typography: 'caption', fontWeight: 700, textTransform: 'uppercase', userSelect: 'none', mr: 0.5, letterSpacing: '0.05em' }}>
+                  <Lightbulb size={14} />
                   <span>Try:</span>
-                </div>
+                </Box>
                 {SUGGESTIONS[mediaType].map((suggestion, idx) => (
-                  <button
+                  <Chip
                     key={idx}
+                    label={suggestion}
                     onClick={() => {
                       setPrompt(suggestion);
                       if (error) setError(null);
                     }}
-                    className="text-xs px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-brand-blue/10 hover:text-brand-blue hover:border-brand-blue/20 border border-slate-200 transition-all text-left truncate max-w-[180px] sm:max-w-xs"
-                    title={suggestion}
-                  >
-                    {suggestion}
-                  </button>
+                    variant="outlined"
+                    size="small"
+                    sx={{ 
+                      maxWidth: { xs: 180, sm: 300 }, 
+                      bgcolor: 'white', 
+                      borderColor: 'grey.200',
+                      color: 'text.secondary',
+                      fontWeight: 500,
+                      boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+                      '&:hover': { bgcolor: 'primary.50', color: 'primary.main', borderColor: 'primary.200', transform: 'translateY(-1px)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' },
+                      transition: 'all 0.2s'
+                    }}
+                  />
                 ))}
-              </div>
+              </Box>
 
-              <div className="mt-4 flex flex-col md:flex-row items-center justify-between gap-4">
+              <Box sx={{ mt: 3, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
                 
                 {/* Controls */}
-                <div className="flex flex-wrap items-center gap-4 w-full md:w-auto justify-center md:justify-start">
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 2, width: { xs: '100%', md: 'auto' }, justifyContent: { xs: 'center', md: 'flex-start' } }}>
                   {/* Mode Toggle */}
-                  <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200">
-                    <button
-                      onClick={() => {
-                        setMediaType(MediaType.IMAGE);
+                  <ToggleButtonGroup
+                    value={mediaType}
+                    exclusive
+                    onChange={(e, newType) => {
+                      if (newType !== null) {
+                        setMediaType(newType);
                         setError(null);
-                      }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        mediaType === MediaType.IMAGE 
-                          ? 'bg-white text-brand-blue shadow-sm' 
-                          : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      <ImageIcon className="w-4 h-4" />
-                      Image
-                    </button>
-                    <button
-                      onClick={() => {
-                        setMediaType(MediaType.VIDEO);
-                        setError(null);
-                        setShowAdvanced(false);
-                      }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        mediaType === MediaType.VIDEO
-                          ? 'bg-white text-brand-red shadow-sm' 
-                          : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      <Film className="w-4 h-4" />
-                      Video
-                    </button>
-                    <button
-                      onClick={() => {
-                        setMediaType(MediaType.MANIPULATION);
-                        setError(null);
-                        setShowAdvanced(false);
-                      }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        mediaType === MediaType.MANIPULATION
-                          ? 'bg-white text-purple-600 shadow-sm' 
-                          : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      <Wand2 className="w-4 h-4" />
-                      Manipulation
-                    </button>
-                     <button
-                      onClick={() => {
-                        setMediaType(MediaType.LOGO);
-                        setError(null);
-                        setShowAdvanced(false);
-                      }}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                        mediaType === MediaType.LOGO
-                          ? 'bg-white text-orange-500 shadow-sm' 
-                          : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      <PenTool className="w-4 h-4" />
-                      Logo Design
-                    </button>
-                  </div>
+                        if (newType === MediaType.VIDEO) setShowAdvanced(false);
+                      }
+                    }}
+                    size="small"
+                    sx={{ 
+                      bgcolor: 'grey.50', 
+                      p: 0.5, 
+                      borderRadius: 3, 
+                      border: 1,
+                      borderColor: 'divider',
+                      boxShadow: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.02)',
+                      '& .MuiToggleButton-root': { 
+                        border: 'none', 
+                        borderRadius: '10px !important', 
+                        px: 2, 
+                        py: 1, 
+                        textTransform: 'none', 
+                        fontWeight: 600, 
+                        color: 'text.secondary', 
+                        transition: 'all 0.2s',
+                        '&.Mui-selected': { 
+                          bgcolor: 'white', 
+                          color: 'primary.main', 
+                          boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)', 
+                          '&:hover': { bgcolor: 'white' } 
+                        },
+                        '&:hover:not(.Mui-selected)': {
+                          bgcolor: 'grey.100',
+                          color: 'text.primary'
+                        }
+                      } 
+                    }}
+                  >
+                    <ToggleButton value={MediaType.IMAGE}>
+                      <ImageIcon size={16} style={{ marginRight: 8 }} /> Image
+                    </ToggleButton>
+                    <ToggleButton value={MediaType.VIDEO}>
+                      <Film size={16} style={{ marginRight: 8 }} /> Video
+                    </ToggleButton>
+                    <ToggleButton value={MediaType.MANIPULATION}>
+                      <Wand2 size={16} style={{ marginRight: 8 }} /> Edit
+                    </ToggleButton>
+                    <ToggleButton value={MediaType.LOGO}>
+                      <PenTool size={16} style={{ marginRight: 8 }} /> Logo
+                    </ToggleButton>
+                  </ToggleButtonGroup>
 
                   {/* API Provider Toggle (Image & Logo only) */}
                   {(mediaType === MediaType.IMAGE || mediaType === MediaType.LOGO) && (
-                    <div className="flex bg-slate-100 p-1 rounded-lg border border-slate-200 ml-2">
-                       <button
-                        onClick={() => setApiProvider('gemini')}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all ${
-                          apiProvider === 'gemini' 
-                            ? 'bg-white text-slate-800 shadow-sm' 
-                            : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                      >
-                        <Sparkles className="w-3.5 h-3.5" />
-                        Gemini
-                      </button>
-                      <button
-                        onClick={() => setApiProvider('external')}
-                        className={`flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all ${
-                          apiProvider === 'external'
-                            ? 'bg-white text-slate-800 shadow-sm' 
-                            : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                      >
-                        <Globe className="w-3.5 h-3.5" />
-                        External API
-                      </button>
-                    </div>
+                    <ToggleButtonGroup
+                      value={apiProvider}
+                      exclusive
+                      onChange={(e, newValue) => {
+                        if (newValue) setApiProvider(newValue);
+                      }}
+                      size="small"
+                      sx={{ 
+                        bgcolor: 'grey.50', 
+                        p: 0.5, 
+                        borderRadius: 3, 
+                        border: 1,
+                        borderColor: 'divider',
+                        boxShadow: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.02)',
+                        '& .MuiToggleButton-root': { 
+                          border: 'none', 
+                          borderRadius: '10px !important', 
+                          px: 1.5, 
+                          py: 1, 
+                          textTransform: 'none', 
+                          fontWeight: 600, 
+                          color: 'text.secondary', 
+                          transition: 'all 0.2s',
+                          '&.Mui-selected': { 
+                            bgcolor: 'white', 
+                            color: 'text.primary', 
+                            boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)', 
+                            '&:hover': { bgcolor: 'white' } 
+                          },
+                          '&:hover:not(.Mui-selected)': {
+                            bgcolor: 'grey.100',
+                            color: 'text.primary'
+                          }
+                        } 
+                      }}
+                    >
+                      <ToggleButton value="gemini">
+                        <Sparkles size={14} style={{ marginRight: 6 }} /> Gemini
+                      </ToggleButton>
+                      <ToggleButton value="external">
+                        <Globe size={14} style={{ marginRight: 6 }} /> External API
+                      </ToggleButton>
+                    </ToggleButtonGroup>
                   )}
 
                   {/* Config Selectors */}
                   {mediaType !== MediaType.MANIPULATION && mediaType !== MediaType.LOGO && (
-                    <select
-                      value={aspectRatio}
-                      onChange={(e) => {
-                        setAspectRatio(e.target.value as AspectRatio);
-                        setError(null);
-                      }}
-                      className="px-3 py-2 bg-slate-100 border-0 rounded-lg text-sm font-medium text-slate-700 focus:ring-2 focus:ring-brand-blue cursor-pointer hover:bg-slate-200 transition-colors"
-                    >
-                      <option value="1:1" disabled={mediaType === MediaType.VIDEO}>Square (1:1) {mediaType === MediaType.VIDEO ? '(Image only)' : ''}</option>
-                      <option value="16:9">Landscape (16:9)</option>
-                      <option value="9:16">Portrait (9:16)</option>
-                      <option value="4:3" disabled={mediaType === MediaType.VIDEO}>Standard (4:3) {mediaType === MediaType.VIDEO ? '(Image only)' : ''}</option>
-                      <option value="3:4" disabled={mediaType === MediaType.VIDEO}>Vertical (3:4) {mediaType === MediaType.VIDEO ? '(Image only)' : ''}</option>
-                    </select>
+                    <FormControl size="small" sx={{ minWidth: 140 }}>
+                      <Select
+                        value={aspectRatio}
+                        onChange={(e) => {
+                          setAspectRatio(e.target.value as AspectRatio);
+                          setError(null);
+                        }}
+                        sx={{ 
+                          bgcolor: 'white', 
+                          borderRadius: 3, 
+                          '& fieldset': { borderColor: 'divider' }, 
+                          '&:hover fieldset': { borderColor: 'primary.main' },
+                          fontWeight: 600, 
+                          color: 'text.primary',
+                          boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
+                        }}
+                      >
+                        <MenuItem value="1:1" disabled={mediaType === MediaType.VIDEO}>Square (1:1) {mediaType === MediaType.VIDEO ? '(Image only)' : ''}</MenuItem>
+                        <MenuItem value="16:9">Landscape (16:9)</MenuItem>
+                        <MenuItem value="9:16">Portrait (9:16)</MenuItem>
+                        <MenuItem value="4:3" disabled={mediaType === MediaType.VIDEO}>Standard (4:3) {mediaType === MediaType.VIDEO ? '(Image only)' : ''}</MenuItem>
+                        <MenuItem value="3:4" disabled={mediaType === MediaType.VIDEO}>Vertical (3:4) {mediaType === MediaType.VIDEO ? '(Image only)' : ''}</MenuItem>
+                      </Select>
+                    </FormControl>
                   )}
                   
                   {mediaType === MediaType.MANIPULATION && (
-                    /* Manipulation Presets */
-                    <select
-                      value={manipulationPreset}
-                      onChange={(e) => setManipulationPreset(e.target.value)}
-                      className="px-3 py-2 bg-slate-100 border-0 rounded-lg text-sm font-medium text-purple-700 focus:ring-2 focus:ring-purple-500 cursor-pointer hover:bg-slate-200 transition-colors max-w-[240px]"
-                    >
-                       {MANIPULATION_PRESETS.map(preset => (
-                         <option key={preset} value={preset}>{preset}</option>
-                       ))}
-                    </select>
+                    <FormControl size="small" sx={{ minWidth: 200, maxWidth: 240 }}>
+                      <Select
+                        value={manipulationPreset}
+                        onChange={(e) => setManipulationPreset(e.target.value)}
+                        sx={{ 
+                          bgcolor: 'white', 
+                          borderRadius: 3, 
+                          '& fieldset': { borderColor: 'divider' }, 
+                          '&:hover fieldset': { borderColor: 'primary.main' },
+                          fontWeight: 600, 
+                          color: 'text.primary',
+                          boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
+                        }}
+                      >
+                        {MANIPULATION_PRESETS.map(preset => (
+                          <MenuItem key={preset} value={preset}>{preset}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   )}
 
                    {mediaType === MediaType.LOGO && (
-                    /* Logo Presets */
-                    <select
-                      value={logoPreset}
-                      onChange={(e) => setLogoPreset(e.target.value)}
-                      className="px-3 py-2 bg-slate-100 border-0 rounded-lg text-sm font-medium text-orange-700 focus:ring-2 focus:ring-orange-500 cursor-pointer hover:bg-slate-200 transition-colors max-w-[240px]"
-                    >
-                       {LOGO_PRESETS.map(preset => (
-                         <option key={preset} value={preset}>{preset}</option>
-                       ))}
-                    </select>
+                    <FormControl size="small" sx={{ minWidth: 200, maxWidth: 240 }}>
+                      <Select
+                        value={logoPreset}
+                        onChange={(e) => setLogoPreset(e.target.value)}
+                        sx={{ 
+                          bgcolor: 'white', 
+                          borderRadius: 3, 
+                          '& fieldset': { borderColor: 'divider' }, 
+                          '&:hover fieldset': { borderColor: 'primary.main' },
+                          fontWeight: 600, 
+                          color: 'text.primary',
+                          boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
+                        }}
+                      >
+                        {LOGO_PRESETS.map(preset => (
+                          <MenuItem key={preset} value={preset}>{preset}</MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   )}
-                </div>
+                </Box>
 
                 {/* Generate Button */}
-                <button
+                <Button
                   onClick={handleGenerate}
-                  disabled={isGenerating}
-                  className={`w-full md:w-auto px-8 py-3 rounded-xl flex items-center justify-center gap-2 font-bold text-white shadow-lg transition-all transform active:scale-95 ${
-                    isGenerating
-                      ? 'bg-slate-300 cursor-not-allowed shadow-none'
-                      : mediaType === MediaType.MANIPULATION
-                        ? 'bg-gradient-to-r from-purple-600 to-blue-500 hover:shadow-xl hover:brightness-110 shadow-purple-500/20'
-                        : mediaType === MediaType.LOGO
-                          ? 'bg-gradient-to-r from-orange-500 to-amber-500 hover:shadow-xl hover:brightness-110 shadow-orange-500/20'
-                          : 'bg-gradient-to-r from-brand-blue to-brand-red hover:shadow-xl hover:brightness-110 shadow-brand-blue/20'
-                  }`}
+                  disabled={isGenerating || !prompt.trim() || (mediaType === MediaType.MANIPULATION && !uploadedImage)}
+                  variant="contained"
+                  size="large"
+                  sx={{ 
+                    px: 4, 
+                    py: 1.5, 
+                    borderRadius: 3, 
+                    background: mediaType === MediaType.MANIPULATION ? 'linear-gradient(135deg, #9333ea 0%, #7e22ce 100%)' : mediaType === MediaType.LOGO ? 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)' : 'linear-gradient(135deg, #0f172a 0%, #334155 100%)', 
+                    color: 'white', 
+                    fontWeight: 700, 
+                    letterSpacing: '0.02em',
+                    '&:hover': { 
+                      background: mediaType === MediaType.MANIPULATION ? 'linear-gradient(135deg, #7e22ce 0%, #6b21a8 100%)' : mediaType === MediaType.LOGO ? 'linear-gradient(135deg, #ea580c 0%, #c2410c 100%)' : 'linear-gradient(135deg, #020617 0%, #0f172a 100%)',
+                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+                      transform: 'translateY(-1px)'
+                    },
+                    '&.Mui-disabled': { background: '#e2e8f0', color: '#94a3b8' },
+                    width: { xs: '100%', md: 'auto' },
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+                    transition: 'all 0.2s ease-in-out'
+                  }}
+                  startIcon={isGenerating ? <CircularProgress size={20} color="inherit" /> : <Sparkles size={20} />}
                 >
-                  {isGenerating ? (
-                    <span className="flex items-center gap-2">
-                      Thinking...
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5" />
-                      {mediaType === MediaType.MANIPULATION ? 'Manipulate' : mediaType === MediaType.LOGO ? 'Create Logo' : 'Generate'}
-                    </span>
-                  )}
-                </button>
-              </div>
+                  {isGenerating ? 'Thinking...' : mediaType === MediaType.MANIPULATION ? 'Manipulate' : mediaType === MediaType.LOGO ? 'Create Logo' : 'Generate'}
+                </Button>
+              </Box>
 
               {/* Advanced Options & Settings Toggle */}
-              <div className="mt-4 border-t border-slate-100 pt-4">
-                <button
+              <Box sx={{ mt: 3, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                <Button
                   onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-brand-blue transition-colors select-none"
+                  color="inherit"
+                  sx={{ color: 'text.secondary', '&:hover': { color: 'primary.main', bgcolor: 'transparent' }, textTransform: 'none', fontWeight: 600 }}
+                  startIcon={<Settings2 size={16} />}
+                  endIcon={showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                 >
-                  <Settings2 className="w-4 h-4" />
-                  <span>Advanced Options & Settings</span>
-                  {showAdvanced ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                </button>
+                  Advanced Options & Settings
+                </Button>
 
                 {/* Advanced Options Panel */}
-                {showAdvanced && (
-                  <div className="mt-4 p-5 bg-slate-50/80 rounded-xl border border-slate-200/80 shadow-inner animate-in fade-in slide-in-from-top-2 duration-200">
+                <Collapse in={showAdvanced}>
+                  <Paper variant="outlined" sx={{ mt: 2, p: 3, bgcolor: 'rgba(248, 250, 252, 0.5)', borderRadius: 3, borderColor: 'divider', boxShadow: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.02)' }}>
                     
                     {/* API Settings */}
-                    <div className="mb-6 pb-6 border-b border-slate-200/80">
-                      <h4 className="text-sm font-bold text-slate-700 mb-3 flex items-center gap-2">
-                        {apiProvider === 'external' ? <Globe className="w-4 h-4" /> : <Key className="w-4 h-4" />} 
+                    <Box sx={{ mb: 3, pb: 3, borderBottom: 1, borderColor: 'divider' }}>
+                      <Typography variant="subtitle2" fontWeight="700" color="text.primary" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {apiProvider === 'external' ? <Globe size={16} /> : <Key size={16} />} 
                         {apiProvider === 'external' ? 'External API Configuration' : 'Gemini API Configuration'}
-                      </h4>
+                      </Typography>
                       
                       {apiProvider === 'external' ? (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Endpoint URL</label>
-                            <input
-                              type="text"
+                        <Grid container spacing={2}>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Endpoint URL"
                               value={externalConfig.endpoint}
                               onChange={(e) => setExternalConfig({...externalConfig, endpoint: e.target.value})}
                               placeholder="https://api.openai.com/v1/images/generations"
-                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-blue"
+                              InputLabelProps={{ shrink: true }}
+                              sx={{ bgcolor: 'white', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                             />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">API Key</label>
-                            <input
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              size="small"
                               type="password"
+                              label="API Key"
                               value={externalConfig.apiKey}
                               onChange={(e) => setExternalConfig({...externalConfig, apiKey: e.target.value})}
                               placeholder="sk-..."
-                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-blue"
+                              InputLabelProps={{ shrink: true }}
+                              sx={{ bgcolor: 'white', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                             />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Model</label>
-                            <input
-                              type="text"
+                          </Grid>
+                          <Grid item xs={12} md={4}>
+                            <TextField
+                              fullWidth
+                              size="small"
+                              label="Model"
                               value={externalConfig.model}
                               onChange={(e) => setExternalConfig({...externalConfig, model: e.target.value})}
                               placeholder="dall-e-3"
-                              className="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-blue"
+                              InputLabelProps={{ shrink: true }}
+                              sx={{ bgcolor: 'white', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                             />
-                          </div>
-                        </div>
+                          </Grid>
+                        </Grid>
                       ) : (
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-white p-4 rounded-lg border border-slate-200">
-                          <div>
-                            <p className="text-sm font-medium text-slate-700">Gemini API Key</p>
-                            <p className="text-xs text-slate-500 mt-1">Select a Google Cloud project API key to use paid models (like Veo for Video Generation) or increase quotas.</p>
-                          </div>
-                          <button
+                        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 2, p: 2, bgcolor: 'white', borderRadius: 2, border: 1, borderColor: 'divider', boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)' }}>
+                          <Box>
+                            <Typography variant="body2" fontWeight="700" color="text.primary">Gemini API Key</Typography>
+                            <Typography variant="caption" color="text.secondary">Select a Google Cloud project API key to use paid models (like Veo for Video Generation) or increase quotas.</Typography>
+                          </Box>
+                          <Button
                             onClick={async () => {
                               // @ts-ignore
                               if (window.aistudio?.openSelectKey) {
@@ -828,159 +1079,187 @@ function App() {
                                 setShowApiKeyModal(true);
                               }
                             }}
-                            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-md transition-colors whitespace-nowrap"
+                            variant="outlined"
+                            color="inherit"
+                            size="small"
+                            sx={{ whiteSpace: 'nowrap', borderRadius: 2, fontWeight: 600, borderColor: 'divider', '&:hover': { bgcolor: 'grey.50', borderColor: 'grey.400' } }}
                           >
                             Set API Key
-                          </button>
-                        </div>
+                          </Button>
+                        </Box>
                       )}
-                    </div>
+                    </Box>
 
                     {mediaType === MediaType.IMAGE && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <Grid container spacing={3}>
                         
                         {/* Left Column: Creative Control */}
-                        <div className="space-y-4">
-                           <div className="space-y-1.5">
-                              <label className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                                <Palette className="w-3.5 h-3.5" /> Style Preset
-                              </label>
-                              <div className="relative">
-                                <select
+                        <Grid item xs={12} md={6}>
+                           <Box sx={{ mb: 2 }}>
+                              <Typography variant="caption" fontWeight="700" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                <Palette size={14} /> Style Preset
+                              </Typography>
+                              <FormControl fullWidth size="small">
+                                <Select
                                   value={stylePreset}
                                   onChange={(e) => setStylePreset(e.target.value)}
-                                  className="w-full pl-3 pr-10 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-blue focus:border-transparent transition-shadow appearance-none"
+                                  sx={{ bgcolor: 'white', borderRadius: 2, '& fieldset': { borderColor: 'divider' }, '&:hover fieldset': { borderColor: 'primary.main' } }}
                                 >
                                   {STYLE_PRESETS.map(style => (
-                                    <option key={style} value={style}>{style}</option>
+                                    <MenuItem key={style} value={style}>{style}</MenuItem>
                                   ))}
-                                </select>
-                                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                              </div>
-                           </div>
+                                </Select>
+                              </FormControl>
+                           </Box>
 
-                           <div className="space-y-1.5">
-                              <label className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                                <Ban className="w-3.5 h-3.5" /> Negative Prompt
-                              </label>
-                              <input
-                                type="text"
+                           <Box>
+                              <Typography variant="caption" fontWeight="700" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                <Ban size={14} /> Negative Prompt
+                              </Typography>
+                              <TextField
+                                fullWidth
+                                size="small"
                                 value={negativePrompt}
                                 onChange={(e) => setNegativePrompt(e.target.value)}
                                 placeholder="What to exclude (e.g. blurry, distortion)"
-                                className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-blue focus:border-transparent placeholder:text-slate-400 transition-shadow"
+                                sx={{ bgcolor: 'white', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
                               />
-                           </div>
-                        </div>
+                           </Box>
+                        </Grid>
 
                         {/* Right Column: Technical Settings */}
-                        <div className="space-y-4">
-                           <div className="space-y-1.5">
-                              <label className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                                <Hash className="w-3.5 h-3.5" /> Seed Control
-                              </label>
-                              <div className="relative">
-                                <input
-                                  type="number"
-                                  value={seed ?? ''}
-                                  onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : undefined)}
-                                  placeholder="Random (-1)"
-                                  className="w-full px-3 py-2.5 bg-white border border-slate-200 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-brand-blue focus:border-transparent placeholder:text-slate-400 transition-shadow"
-                                />
-                                <button 
-                                  onClick={() => setSeed(Math.floor(Math.random() * 1000000))}
-                                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-brand-blue hover:bg-slate-100 rounded-md transition-colors"
-                                  title="Randomize Seed"
-                                >
-                                  <Dices className="w-4 h-4" />
-                                </button>
-                              </div>
-                           </div>
+                        <Grid item xs={12} md={6}>
+                           <Box sx={{ mb: 2 }}>
+                              <Typography variant="caption" fontWeight="700" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                <Hash size={14} /> Seed Control
+                              </Typography>
+                              <TextField
+                                fullWidth
+                                size="small"
+                                type="number"
+                                value={seed ?? ''}
+                                onChange={(e) => setSeed(e.target.value ? parseInt(e.target.value) : undefined)}
+                                placeholder="Random (-1)"
+                                sx={{ bgcolor: 'white', '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                                InputProps={{
+                                  endAdornment: (
+                                    <InputAdornment position="end">
+                                      <IconButton 
+                                        onClick={() => setSeed(Math.floor(Math.random() * 1000000))}
+                                        edge="end"
+                                        size="small"
+                                        title="Randomize Seed"
+                                      >
+                                        <Dices size={16} />
+                                      </IconButton>
+                                    </InputAdornment>
+                                  ),
+                                }}
+                              />
+                           </Box>
 
-                           <div className="space-y-1.5">
-                              <label className="flex items-center gap-1.5 text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-                                <ScanLine className="w-3.5 h-3.5" /> Quality
-                              </label>
-                              <div 
+                           <Box>
+                              <Typography variant="caption" fontWeight="700" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                <ScanLine size={14} /> Quality
+                              </Typography>
+                              <Box 
                                 onClick={() => setUpscale4K(!upscale4K)}
-                                className={`w-full px-3 py-2 flex items-center justify-between border rounded-lg cursor-pointer transition-all group select-none ${
-                                  upscale4K 
-                                  ? 'bg-brand-blue/5 border-brand-blue/50 shadow-sm' 
-                                  : 'bg-white border-slate-200 hover:border-brand-blue/30 hover:bg-slate-50'
-                                }`}
+                                sx={{ 
+                                  width: '100%', 
+                                  px: 2, 
+                                  py: 1, 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justifyContent: 'space-between', 
+                                  border: 1, 
+                                  borderColor: upscale4K ? 'primary.main' : 'divider', 
+                                  borderRadius: 2, 
+                                  cursor: 'pointer', 
+                                  bgcolor: upscale4K ? 'primary.50' : 'white',
+                                  transition: 'all 0.2s',
+                                  userSelect: 'none',
+                                  boxShadow: '0 1px 2px 0 rgb(0 0 0 / 0.05)'
+                                }}
                               >
-                                <div className="flex items-center gap-3">
-                                  <div className={`p-1.5 rounded-md transition-colors ${upscale4K ? 'bg-brand-blue text-white' : 'bg-slate-100 text-slate-400 group-hover:text-brand-blue'}`}>
-                                     <ScanLine className="w-4 h-4" />
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className={`text-sm font-semibold leading-tight ${upscale4K ? 'text-brand-blue' : 'text-slate-700'}`}>Upscale to 4K</span>
-                                    <span className="text-[10px] text-slate-500 leading-tight">Post-process enhancement</span>
-                                  </div>
-                                </div>
-                                <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-all ${upscale4K ? 'border-brand-blue bg-brand-blue' : 'border-slate-300 bg-slate-50'}`}>
-                                   <Check className={`w-3 h-3 text-white transition-transform ${upscale4K ? 'scale-100' : 'scale-0'}`} />
-                                </div>
-                              </div>
-                           </div>
-                        </div>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                  <Box sx={{ p: 0.5, borderRadius: 1.5, bgcolor: upscale4K ? 'primary.main' : 'grey.100', color: upscale4K ? 'white' : 'text.disabled', transition: 'all 0.2s' }}>
+                                     <ScanLine size={16} />
+                                  </Box>
+                                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                    <Typography variant="body2" fontWeight="700" color={upscale4K ? 'primary.main' : 'text.primary'} sx={{ lineHeight: 1.2 }}>Upscale to 4K</Typography>
+                                    <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>Post-process enhancement</Typography>
+                                  </Box>
+                                </Box>
+                                <Box sx={{ width: 20, height: 20, borderRadius: '50%', border: 1, borderColor: upscale4K ? 'primary.main' : 'grey.300', bgcolor: upscale4K ? 'primary.main' : 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s' }}>
+                                   <Check size={12} color="white" style={{ transform: upscale4K ? 'scale(1)' : 'scale(0)', transition: 'transform 0.2s' }} />
+                                </Box>
+                              </Box>
+                           </Box>
+                        </Grid>
 
-                      </div>
+                      </Grid>
                     )}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </section>
+                  </Paper>
+                </Collapse>
+              </Box>
+            </Paper>
+          </Container>
+        </Box>
 
         {/* Results Section */}
-        <section 
+        <Container 
           ref={galleryRef} 
-          className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-12"
+          maxWidth="xl" 
+          sx={{ flex: 1, py: { xs: 4, md: 6 }, display: 'flex', flexDirection: 'column' }}
         >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">Gallery</h2>
-            <span className="text-sm text-slate-500">{history.length} items generated</span>
-          </div>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
+            <Typography variant="h5" fontWeight="800" color="text.primary" sx={{ letterSpacing: '-0.02em' }}>Gallery</Typography>
+            <Chip label={`${history.length} items`} size="small" sx={{ bgcolor: 'grey.100', color: 'text.secondary', fontWeight: 600, border: 1, borderColor: 'divider' }} />
+          </Box>
 
           {error && (
-            <ErrorMessage 
-              message={error} 
-              onClose={() => setError(null)} 
-            />
+            <Box sx={{ mb: 4 }}>
+              <ErrorMessage 
+                message={error} 
+                onClose={() => setError(null)} 
+              />
+            </Box>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Grid container spacing={3}>
             {isGenerating && (
-               <div className="col-span-1">
+               <Grid item xs={12} sm={6} md={4}>
                  <LoadingState message={loadingMessage} />
-               </div>
+               </Grid>
             )}
             
             {history.map((item) => (
-              <MediaCard 
-                key={item.id} 
-                item={item} 
-                onUpscale={item.type === MediaType.IMAGE && !item.prompt.includes("(Upscaled") ? () => handleUpscale(item) : undefined} 
-                onEditSave={item.type === MediaType.IMAGE ? (newUrl) => handleEditSave(item, newUrl) : undefined}
-                onAIEdit={item.type === MediaType.IMAGE ? (editPrompt) => handleAIEdit(item, editPrompt) : undefined}
-              />
+              <Grid item xs={12} sm={6} md={4} key={item.id}>
+                <MediaCard 
+                  item={item} 
+                  onUpscale={item.type === MediaType.IMAGE && !item.prompt.includes("(Upscaled") ? () => handleUpscale(item) : undefined} 
+                  onEditSave={item.type === MediaType.IMAGE ? (newUrl) => handleEditSave(item, newUrl) : undefined}
+                  onAIEdit={item.type === MediaType.IMAGE ? (editPrompt) => handleAIEdit(item, editPrompt) : undefined}
+                />
+              </Grid>
             ))}
 
             {!isGenerating && history.length === 0 && !error && (
-              <div className="col-span-full flex flex-col items-center justify-center py-24 text-center text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
-                <div className="p-4 bg-slate-100 rounded-full mb-4">
-                   <Sparkles className="w-8 h-8 text-slate-300" />
-                </div>
-                <p className="text-lg font-medium mb-1">Your canvas is empty</p>
-                <p className="text-sm">Enter a prompt above to start creating.</p>
-              </div>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 12, textAlign: 'center', color: 'text.disabled', border: '2px dashed', borderColor: 'divider', borderRadius: 4, bgcolor: 'rgba(248, 250, 252, 0.5)', transition: 'all 0.3s', '&:hover': { bgcolor: 'grey.50', borderColor: 'grey.300' } }}>
+                  <Box sx={{ p: 3, bgcolor: 'white', borderRadius: '50%', mb: 3, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)' }}>
+                     <Sparkles size={40} color="#94a3b8" />
+                  </Box>
+                  <Typography variant="h6" fontWeight="700" color="text.primary" sx={{ mb: 1 }}>Your canvas is empty</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 300 }}>Enter a prompt above to start creating your next masterpiece.</Typography>
+                </Box>
+              </Grid>
             )}
-          </div>
-        </section>
-      </main>
-    </div>
+          </Grid>
+        </Container>
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
 }
 

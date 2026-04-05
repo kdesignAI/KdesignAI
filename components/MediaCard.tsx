@@ -1,6 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { GeneratedItem, MediaType } from '../types';
 import { Download, Play, ScanLine, Edit2, RotateCw, Crop, Wand2, Check, X, MessageSquare, Send } from 'lucide-react';
+import { Box, Card, CardMedia, IconButton, Typography, Tooltip, Chip, TextField, Button, Fade } from '@mui/material';
 
 interface MediaCardProps {
   item: GeneratedItem;
@@ -180,86 +181,98 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onUpscale, onEditSav
   // If editing, different view
   if (isEditing && (item.type === MediaType.IMAGE || item.type === MediaType.LOGO)) {
     return (
-       <div className="rounded-2xl overflow-hidden bg-slate-900 shadow-xl border border-slate-700 relative flex flex-col aspect-[4/3] md:aspect-[16/9]">
+       <Card sx={{ borderRadius: 4, overflow: 'hidden', bgcolor: 'grey.900', boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5)', border: 1, borderColor: 'grey.800', position: 'relative', display: 'flex', flexDirection: 'column', aspectRatio: { xs: '4/3', md: '16/9' } }}>
           {/* Editor Area */}
-          <div className="flex-1 relative overflow-hidden flex items-center justify-center bg-black/50 p-4">
+          <Box sx={{ flex: 1, position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(0,0,0,0.8)', p: 2, backgroundImage: 'radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, transparent 70%)' }}>
              <img 
                ref={imgRef}
                src={item.url} 
-               className="max-w-full max-h-full object-contain shadow-2xl ring-1 ring-white/10"
-               style={getPreviewStyle()}
                alt="Editing preview"
+               style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)', borderRadius: '8px', ...getPreviewStyle() }}
              />
              {/* Crop Overlay Indicator (Visual only - simplistic) */}
              {crop !== 'original' && (
-                <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-                   <div className={`border-2 border-white/50 shadow-[0_0_0_9999px_rgba(0,0,0,0.5)] ${
-                      crop === 'square' ? 'aspect-square w-full h-auto max-h-full' : 
-                      crop === 'landscape' ? 'aspect-video w-full h-auto' : 
-                      'aspect-[9/16] h-full w-auto'
-                   }`}></div>
-                </div>
+                <Box sx={{ position: 'absolute', inset: 0, pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                   <Box sx={{ 
+                      border: '2px solid rgba(255,255,255,0.8)', 
+                      boxShadow: '0 0 0 9999px rgba(0,0,0,0.7)',
+                      aspectRatio: crop === 'square' ? '1/1' : crop === 'landscape' ? '16/9' : '9/16',
+                      width: crop === 'square' || crop === 'landscape' ? '100%' : 'auto',
+                      height: crop === 'portrait' ? '100%' : 'auto',
+                      maxHeight: '100%',
+                      transition: 'all 0.3s ease'
+                   }} />
+                </Box>
              )}
-          </div>
+          </Box>
 
           {/* Toolbar */}
-          <div className="bg-slate-800 p-3 flex items-center justify-between gap-2 border-t border-slate-700">
-             <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => setRotation((r) => (r + 90) % 360)}
-                  className="p-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 hover:text-white transition-colors"
-                  title="Rotate 90°"
-                >
-                  <RotateCw className="w-5 h-5" />
-                </button>
-                <button 
-                  onClick={cycleCrop}
-                  className="p-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 hover:text-white transition-colors relative group"
-                  title={`Crop: ${crop}`}
-                >
-                  <Crop className="w-5 h-5" />
-                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap capitalize">{crop}</span>
-                </button>
-                <button 
-                  onClick={cycleFilter}
-                  className="p-2 bg-slate-700 text-slate-200 rounded-lg hover:bg-slate-600 hover:text-white transition-colors relative group"
-                  title={`Filter: ${filter}`}
-                >
-                  <Wand2 className="w-5 h-5" />
-                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap capitalize">{filter}</span>
-                </button>
-             </div>
+          <Box sx={{ bgcolor: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(12px)', p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, borderTop: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
+             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Tooltip title="Rotate 90°">
+                  <IconButton onClick={() => setRotation((r) => (r + 90) % 360)} sx={{ bgcolor: 'rgba(255,255,255,0.1)', color: 'grey.300', '&:hover': { bgcolor: 'rgba(255,255,255,0.2)', color: 'white' }, borderRadius: 2, transition: 'all 0.2s' }} size="small">
+                    <RotateCw size={18} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={`Crop: ${crop}`}>
+                  <IconButton onClick={cycleCrop} sx={{ bgcolor: crop !== 'original' ? 'primary.main' : 'rgba(255,255,255,0.1)', color: crop !== 'original' ? 'white' : 'grey.300', '&:hover': { bgcolor: crop !== 'original' ? 'primary.dark' : 'rgba(255,255,255,0.2)', color: 'white' }, borderRadius: 2, transition: 'all 0.2s' }} size="small">
+                    <Crop size={18} />
+                  </IconButton>
+                </Tooltip>
+                <Tooltip title={`Filter: ${filter}`}>
+                  <IconButton onClick={cycleFilter} sx={{ bgcolor: filter !== 'none' ? 'primary.main' : 'rgba(255,255,255,0.1)', color: filter !== 'none' ? 'white' : 'grey.300', '&:hover': { bgcolor: filter !== 'none' ? 'primary.dark' : 'rgba(255,255,255,0.2)', color: 'white' }, borderRadius: 2, transition: 'all 0.2s' }} size="small">
+                    <Wand2 size={18} />
+                  </IconButton>
+                </Tooltip>
+             </Box>
 
-             <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => { setIsEditing(false); setRotation(0); setFilter('none'); setCrop('original'); }}
-                  className="p-2 text-slate-400 hover:text-white transition-colors"
-                  title="Cancel"
-                >
-                  <X className="w-6 h-6" />
-                </button>
-                <button 
+             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Tooltip title="Cancel">
+                  <IconButton onClick={() => { setIsEditing(false); setRotation(0); setFilter('none'); setCrop('original'); }} sx={{ color: 'grey.400', '&:hover': { color: 'white', bgcolor: 'rgba(255,255,255,0.1)' }, transition: 'all 0.2s' }} size="small">
+                    <X size={20} />
+                  </IconButton>
+                </Tooltip>
+                <Button 
                   onClick={handleSaveEdit}
                   disabled={isSaving}
-                  className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:bg-blue-600 transition-colors font-medium flex items-center gap-2 disabled:opacity-50"
-                  title="Save Changes"
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  startIcon={isSaving ? undefined : <Check size={16} />}
+                  sx={{ borderRadius: 2, fontWeight: 600, px: 2, py: 0.75, textTransform: 'none' }}
                 >
-                  {isSaving ? 'Saving...' : <> <Check className="w-4 h-4" /> Save </>}
-                </button>
-             </div>
-          </div>
-       </div>
+                  {isSaving ? 'Saving...' : 'Save Changes'}
+                </Button>
+             </Box>
+          </Box>
+       </Card>
     );
   }
 
   return (
-    <div className="group relative rounded-2xl overflow-hidden bg-slate-100 shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border border-slate-200">
-      <div className={`aspect-[${item.aspectRatio.replace(':', '/')}] w-full relative`}>
+    <Card 
+      sx={{ 
+        position: 'relative', 
+        borderRadius: 4, 
+        overflow: 'hidden', 
+        bgcolor: 'white', 
+        boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)', 
+        border: 1, 
+        borderColor: 'divider',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        '&:hover': {
+          boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+          transform: 'translateY(-4px)',
+          '& .overlay': { opacity: 1 }
+        }
+      }}
+    >
+      <Box sx={{ aspectRatio: item.aspectRatio.replace(':', '/'), width: '100%', position: 'relative', bgcolor: 'grey.50' }}>
         {item.type === MediaType.IMAGE || item.type === MediaType.LOGO ? (
           <img 
             src={item.url} 
             alt={item.prompt} 
-            className="w-full h-full object-cover"
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             loading="lazy"
             onLoad={(e) => {
               const img = e.currentTarget;
@@ -267,11 +280,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onUpscale, onEditSav
             }}
           />
         ) : (
-          <div className="w-full h-full relative bg-black group-video">
+          <Box sx={{ width: '100%', height: '100%', position: 'relative', bgcolor: 'black' }}>
              <video 
                 ref={videoRef}
                 src={item.url}
-                className="w-full h-full object-cover"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                 controls
                 playsInline
                 onPlay={() => setIsPlaying(true)}
@@ -280,125 +293,129 @@ export const MediaCard: React.FC<MediaCardProps> = ({ item, onUpscale, onEditSav
                   const vid = e.currentTarget;
                   setResolution(`${vid.videoWidth}x${vid.videoHeight}px`);
                 }}
-                onClick={(e) => {
-                  // We allow the native controls to work if clicked.
-                  // If the video surface is clicked, we toggle.
-                }}
              />
              {/* Play Button Overlay (Visible when paused) */}
              {!isPlaying && (
-                <div 
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none"
-                >
-                   <div className="w-14 h-14 bg-black/40 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-lg transition-transform transform group-hover:scale-110">
-                      <Play className="w-6 h-6 text-white fill-white ml-1" />
-                   </div>
-                </div>
+                <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
+                   <Box sx={{ width: 64, height: 64, bgcolor: 'rgba(255,255,255,0.2)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.4)', boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)', transition: 'transform 0.3s', '.MuiCard-root:hover &': { transform: 'scale(1.1)' } }}>
+                      <Play size={28} color="white" fill="white" style={{ marginLeft: 4 }} />
+                   </Box>
+                </Box>
              )}
-          </div>
+          </Box>
         )}
 
         {/* Overlay Actions */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 pointer-events-none">
-          <div className="flex justify-end gap-2 pointer-events-auto">
+        <Box className="overlay" sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(15, 23, 42, 0.8) 0%, rgba(15, 23, 42, 0.2) 50%, transparent 100%)', opacity: 0, transition: 'opacity 0.3s ease-in-out', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', p: 2, pointerEvents: 'none' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, pointerEvents: 'auto' }}>
              {/* AI Edit Toggle */}
              {(item.type === MediaType.IMAGE || item.type === MediaType.LOGO) && onAIEdit && (
-               <button
-                 onClick={(e) => {
-                   e.stopPropagation();
-                   setIsAIEditing(!isAIEditing);
-                   // Reset canvas edit if open
-                   setIsEditing(false);
-                 }}
-                 className={`px-2 py-1 backdrop-blur text-white text-xs rounded-md hover:bg-brand-blue transition-colors flex items-center gap-1 ${isAIEditing ? 'bg-brand-blue' : 'bg-black/50'}`}
-                 title="Magic Edit with Text"
-               >
-                 <MessageSquare className="w-3 h-3" /> AI Edit
-               </button>
+               <Tooltip title="Magic Edit with Text">
+                 <Button
+                   onClick={(e) => {
+                     e.stopPropagation();
+                     setIsAIEditing(!isAIEditing);
+                     setIsEditing(false);
+                   }}
+                   size="small"
+                   sx={{ minWidth: 0, px: 1.5, py: 0.5, bgcolor: isAIEditing ? 'primary.main' : 'rgba(255,255,255,0.2)', color: 'white', backdropFilter: 'blur(8px)', borderRadius: 2, border: '1px solid rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'primary.main', borderColor: 'primary.main' }, textTransform: 'none', fontSize: '0.75rem', fontWeight: 600, transition: 'all 0.2s' }}
+                   startIcon={<MessageSquare size={14} />}
+                 >
+                   AI Edit
+                 </Button>
+               </Tooltip>
              )}
 
              {/* Canvas Edit Toggle */}
              {(item.type === MediaType.IMAGE || item.type === MediaType.LOGO) && onEditSave && (
-               <button
+               <Button
                  onClick={(e) => {
                    e.stopPropagation();
                    setIsEditing(true);
                    setIsAIEditing(false);
                  }}
-                 className="px-2 py-1 bg-black/50 backdrop-blur text-white text-xs rounded-md hover:bg-black/70 transition-colors flex items-center gap-1"
+                 size="small"
+                 sx={{ minWidth: 0, px: 1.5, py: 0.5, bgcolor: 'rgba(255,255,255,0.2)', color: 'white', backdropFilter: 'blur(8px)', borderRadius: 2, border: '1px solid rgba(255,255,255,0.1)', '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' }, textTransform: 'none', fontSize: '0.75rem', fontWeight: 600, transition: 'all 0.2s' }}
+                 startIcon={<Edit2 size={14} />}
                >
-                 <Edit2 className="w-3 h-3" /> Edit
-               </button>
+                 Edit
+               </Button>
              )}
-             <span className="px-2 py-1 bg-black/50 backdrop-blur text-white text-xs rounded-md uppercase tracking-wider">
-                {item.type}
-             </span>
-          </div>
+             <Chip label={item.type} size="small" sx={{ bgcolor: 'rgba(0,0,0,0.6)', color: 'white', backdropFilter: 'blur(8px)', borderRadius: 2, textTransform: 'uppercase', fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.05em', height: 26, border: '1px solid rgba(255,255,255,0.1)' }} />
+          </Box>
           
-          <div className="space-y-2">
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
              {/* AI Edit Input Form - Appears when toggled */}
              {isAIEditing && (
-               <div className="pointer-events-auto bg-white/95 backdrop-blur-md p-2 rounded-lg shadow-xl animate-in slide-in-from-bottom-2 mb-2">
-                 <form onSubmit={handleSubmitAIEdit} className="flex gap-2">
-                   <input 
-                     type="text"
-                     value={aiEditPrompt}
-                     onChange={(e) => setAiEditPrompt(e.target.value)}
-                     placeholder="e.g., Add sunglasses..."
-                     className="flex-1 text-xs px-3 py-2 bg-slate-50 border border-slate-200 rounded-md focus:ring-2 focus:ring-brand-blue outline-none text-slate-900 placeholder:text-slate-400"
-                     autoFocus
-                     onClick={(e) => e.stopPropagation()}
-                   />
-                   <button 
-                     type="submit"
-                     disabled={!aiEditPrompt.trim()}
-                     className="p-2 bg-brand-blue text-white rounded-md hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                     title="Generate Edit"
-                   >
-                     <Send className="w-3 h-3" />
-                   </button>
-                 </form>
-               </div>
+               <Fade in={isAIEditing}>
+                 <Box sx={{ pointerEvents: 'auto', bgcolor: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(12px)', p: 1.5, borderRadius: 3, boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)', mb: 1, border: '1px solid rgba(255,255,255,0.5)' }}>
+                   <Box component="form" onSubmit={handleSubmitAIEdit} sx={{ display: 'flex', gap: 1 }}>
+                     <TextField 
+                       size="small"
+                       value={aiEditPrompt}
+                       onChange={(e) => setAiEditPrompt(e.target.value)}
+                       placeholder="e.g., Add sunglasses..."
+                       fullWidth
+                       autoFocus
+                       onClick={(e) => e.stopPropagation()}
+                       sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', fontSize: '0.875rem', borderRadius: 2 } }}
+                     />
+                     <IconButton 
+                       type="submit"
+                       disabled={!aiEditPrompt.trim()}
+                       color="primary"
+                       sx={{ bgcolor: 'primary.main', color: 'white', borderRadius: 2, '&:hover': { bgcolor: 'primary.dark' }, '&.Mui-disabled': { bgcolor: 'grey.300', color: 'grey.500' }, width: 40, height: 40 }}
+                       size="small"
+                     >
+                       <Send size={18} />
+                     </IconButton>
+                   </Box>
+                 </Box>
+               </Fade>
              )}
 
              {/* Text remains pointer-events-none to allow clicking through to video controls behind it if needed */}
              {!isAIEditing && (
-                <p className="text-white text-sm line-clamp-2 drop-shadow-md font-medium">
+                <Typography variant="body2" color="white" fontWeight="500" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textShadow: '0 2px 4px rgba(0,0,0,0.8)', lineHeight: 1.4 }}>
                   {item.prompt}
-                </p>
+                </Typography>
              )}
 
              {!isAIEditing && resolution && (
-               <p className="text-white/70 text-[10px] font-mono tracking-wide uppercase drop-shadow-md">
+               <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.8)', fontFamily: 'monospace', letterSpacing: '0.05em', textTransform: 'uppercase', textShadow: '0 1px 2px rgba(0,0,0,0.8)', fontWeight: 600 }}>
                  {resolution}
-               </p>
+               </Typography>
              )}
 
-             <div className="flex items-center gap-2 pointer-events-auto">
-               <button 
-                 onClick={handleDownload}
-                 className="p-2 bg-white text-slate-900 rounded-full hover:bg-brand-yellow transition-colors shadow-lg"
-                 title="Download"
-               >
-                 <Download className="w-4 h-4" />
-               </button>
+             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pointerEvents: 'auto' }}>
+               <Tooltip title="Download">
+                 <IconButton 
+                   onClick={handleDownload}
+                   sx={{ bgcolor: 'white', color: 'grey.900', '&:hover': { bgcolor: '#FFD166', transform: 'translateY(-2px)' }, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', transition: 'all 0.2s', width: 36, height: 36 }}
+                   size="small"
+                 >
+                   <Download size={18} />
+                 </IconButton>
+               </Tooltip>
 
                {onUpscale && (
-                 <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onUpscale();
-                    }}
-                    className="p-2 bg-white text-slate-900 rounded-full hover:bg-brand-blue hover:text-white transition-colors shadow-lg"
-                    title="Upscale to 4K"
-                 >
-                    <ScanLine className="w-4 h-4" />
-                 </button>
+                 <Tooltip title="Upscale to 4K">
+                   <IconButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUpscale();
+                      }}
+                      sx={{ bgcolor: 'white', color: 'grey.900', '&:hover': { bgcolor: 'primary.main', color: 'white', transform: 'translateY(-2px)' }, boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', transition: 'all 0.2s', width: 36, height: 36 }}
+                      size="small"
+                   >
+                      <ScanLine size={18} />
+                   </IconButton>
+                 </Tooltip>
                )}
-             </div>
-          </div>
-        </div>
-      </div>
-    </div>
+             </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Card>
   );
 };

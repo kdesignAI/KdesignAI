@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Typography, Box, IconButton, Alert } from '@mui/material';
 import { Key, X, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface ApiKeyModalProps {
@@ -11,8 +12,6 @@ interface ApiKeyModalProps {
 export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onSave, initialKey = '' }) => {
   const [apiKey, setApiKey] = useState(initialKey);
   const [isSaved, setIsSaved] = useState(false);
-
-  if (!isOpen) return null;
 
   const handleSave = () => {
     if (apiKey.trim()) {
@@ -31,67 +30,107 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ isOpen, onClose, onSav
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <div className="flex items-center gap-2 text-slate-800 font-semibold">
-            <Key className="w-5 h-5 text-brand-blue" />
-            <h2>Set Gemini API Key</h2>
-          </div>
-          <button 
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+    <Dialog 
+      open={isOpen} 
+      onClose={onClose} 
+      maxWidth="sm" 
+      fullWidth 
+      PaperProps={{ 
+        sx: { 
+          borderRadius: 4,
+          boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.25)',
+          overflow: 'hidden'
+        } 
+      }}
+    >
+      <DialogTitle sx={{ m: 0, p: 3, pb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ p: 1, bgcolor: 'primary.50', borderRadius: 2, color: 'primary.main' }}>
+            <Key size={20} />
+          </Box>
+          <Typography variant="h6" component="div" fontWeight="800" sx={{ letterSpacing: '-0.02em' }}>
+            Set Gemini API Key
+          </Typography>
+        </Box>
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{ color: 'text.secondary', bgcolor: 'grey.50', '&:hover': { bgcolor: 'grey.100', color: 'text.primary' } }}
+          size="small"
+        >
+          <X size={20} />
+        </IconButton>
+      </DialogTitle>
+      
+      <DialogContent sx={{ px: 3, pb: 4, pt: '0 !important' }}>
+        <Alert 
+          severity="info" 
+          icon={<AlertCircle size={20} />} 
+          sx={{ 
+            mb: 4, 
+            borderRadius: 3,
+            bgcolor: 'info.50',
+            color: 'info.900',
+            border: '1px solid',
+            borderColor: 'info.100',
+            '& .MuiAlert-icon': { color: 'info.main' }
+          }}
+        >
+          To use this app externally (e.g., on Vercel), you need to provide your own paid Gemini API key. 
+          This key is stored securely in your browser's local storage and is never sent to our servers.
+        </Alert>
         
-        <div className="p-6 space-y-4">
-          <div className="bg-blue-50 text-blue-800 p-3 rounded-lg flex items-start gap-2 text-sm">
-            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-            <p>
-              To use this app externally (e.g., on Vercel), you need to provide your own paid Gemini API key. 
-              This key is stored securely in your browser's local storage and is never sent to our servers.
-            </p>
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="apiKey" className="block text-sm font-medium text-slate-700">
-              Gemini API Key
-            </label>
-            <input
-              id="apiKey"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="AIzaSy..."
-              className="w-full px-4 py-2 border border-slate-200 rounded-lg focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue outline-none transition-all font-mono text-sm"
-            />
-          </div>
-        </div>
-        
-        <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-200/50 rounded-lg transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 text-sm font-medium text-white bg-slate-800 hover:bg-slate-900 rounded-lg transition-colors flex items-center gap-2"
-          >
-            {isSaved ? (
-              <>
-                <CheckCircle2 className="w-4 h-4" />
-                Saved
-              </>
-            ) : (
-              'Save Key'
-            )}
-          </button>
-        </div>
-      </div>
-    </div>
+        <Typography variant="subtitle2" fontWeight="700" color="text.primary" sx={{ mb: 1 }}>
+          Gemini API Key
+        </Typography>
+        <TextField
+          autoFocus
+          fullWidth
+          type="password"
+          placeholder="AIzaSy..."
+          value={apiKey}
+          onChange={(e) => setApiKey(e.target.value)}
+          variant="outlined"
+          size="medium"
+          InputProps={{ 
+            sx: { 
+              fontFamily: 'monospace',
+              bgcolor: 'grey.50',
+              borderRadius: 2,
+              '&:hover': { bgcolor: 'white' },
+              '&.Mui-focused': { bgcolor: 'white', boxShadow: '0 0 0 2px rgba(14, 165, 233, 0.2)' }
+            } 
+          }}
+        />
+      </DialogContent>
+      
+      <DialogActions sx={{ p: 3, pt: 0 }}>
+        <Button 
+          onClick={onClose} 
+          color="inherit" 
+          sx={{ fontWeight: 600, borderRadius: 2, px: 3, py: 1, color: 'text.secondary', '&:hover': { bgcolor: 'grey.100' } }}
+        >
+          Cancel
+        </Button>
+        <Button 
+          onClick={handleSave} 
+          variant="contained" 
+          disableElevation
+          sx={{ 
+            bgcolor: 'grey.900', 
+            color: 'white', 
+            '&:hover': { bgcolor: 'black', transform: 'translateY(-1px)', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' },
+            fontWeight: 600,
+            borderRadius: 2,
+            px: 3,
+            py: 1,
+            transition: 'all 0.2s'
+          }}
+          startIcon={isSaved ? <CheckCircle2 size={18} /> : null}
+        >
+          {isSaved ? 'Saved' : 'Save Key'}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
